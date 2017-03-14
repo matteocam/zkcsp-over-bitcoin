@@ -10,7 +10,7 @@ find_package(Boost COMPONENTS system thread REQUIRED)
 
 
 INCLUDE_DIRECTORIES($ENV{HOME} ${BOOST_INCLUDEDIR}
-		$ENV{HOME}/Documents/libscapi/lib/OTExtensionBristol $ENV{HOME}/Documents/libscapi/lib/)
+		$ENV{HOME}/libscapi/lib/OTExtensionBristol $ENV{HOME}/libscapi/lib/)
 
 link_directories(/usr/ssl/lib/ /usr/local/lib $ENV{HOME}/Documents/libscapi/install/lib ${BOOST_LIBRARYDIR})
 
@@ -18,6 +18,6 @@ set(SOURCE_FILES YaoSEParty.cpp)
 add_executable(YaoSingleExecution ${SOURCE_FILES})
 add_library(yaoSingleExecution ${SOURCE_FILES})
 
-TARGET_LINK_LIBRARIES(YaoSingleExecution $ENV{HOME}/Documents/libscapi/scapi.a
+TARGET_LINK_LIBRARIES(YaoSingleExecution $ENV{HOME}/libscapi/scapi.a
         boost_system boost_thread pthread crypto dl ssl z relic gmp emp-tool)
 
