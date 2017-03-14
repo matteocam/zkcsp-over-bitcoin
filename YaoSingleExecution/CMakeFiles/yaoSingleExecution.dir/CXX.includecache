@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/m/Documents/libscapi/protocols/YaoSingleExecution/YaoSEParty.cpp
+YaoSEParty.h
+/home/m/Documents/libscapi/protocols/YaoSingleExecution/YaoSEParty.h
+
+/home/m/Documents/libscapi/protocols/YaoSingleExecution/YaoSEParty.h
+libscapi/include/CryptoInfra/Protocol.hpp
+-
+libscapi/include/CryptoInfra/SecurityLevel.hpp
+-
+libscapi/include/infra/CircuitConverter.hpp
+-
+libscapi/lib/EMP/emp-m2pc/malicious/malicious.h
+-
+fstream
+-
+
+/home/m/libscapi/include/CryptoInfra/Protocol.hpp
+
+/home/m/libscapi/include/CryptoInfra/SecurityLevel.hpp
+
