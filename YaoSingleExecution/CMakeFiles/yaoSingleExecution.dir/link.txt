@@ -1,2 +1,0 @@
-/usr/bin/ar qc libyaoSingleExecution.a  CMakeFiles/yaoSingleExecution.dir/YaoSEParty.cpp.o
-/usr/bin/ranlib libyaoSingleExecution.a

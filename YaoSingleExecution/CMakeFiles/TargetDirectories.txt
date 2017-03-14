@@ -1,4 +1,0 @@
-/home/m/Documents/libscapi/protocols/YaoSingleExecution/CMakeFiles/rebuild_cache.dir
-/home/m/Documents/libscapi/protocols/YaoSingleExecution/CMakeFiles/edit_cache.dir
-/home/m/Documents/libscapi/protocols/YaoSingleExecution/CMakeFiles/yaoSingleExecution.dir
-/home/m/Documents/libscapi/protocols/YaoSingleExecution/CMakeFiles/YaoSingleExecution.dir
