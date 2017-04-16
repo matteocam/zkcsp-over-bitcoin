@@ -35,7 +35,7 @@ void mysnark_init_public_params() {
     default_r1cs_ppzksnark_pp::init_public_params();
 }
 
-void gen_keypair(void* h, keypair_callback cb) {
+r1cs_ppzksnark_keypair<default_r1cs_ppzksnark_pp> gen_keypair(void* h, keypair_callback cb) {
     auto keypair = generate_keypair<default_r1cs_ppzksnark_pp>();
 
     std::stringstream provingKey;
@@ -47,11 +47,13 @@ void gen_keypair(void* h, keypair_callback cb) {
     std::string vk = verifyingKey.str();
 
     cb(h, pk.c_str(), pk.length(), vk.c_str(), vk.length());
+    
+    return keypair;
 }
 
 
 template<typename FieldT>
-bool gen_proof(void *keypair, void* h,
+std::tuple<r1cs_ppzksnark_proof<ppzksnark_ppT> gen_proof(void *keypair, void* h,
 							 proof_callback cb,
 							 const inputT<FieldT> &in,
 							 const witnessT solution) {
@@ -61,7 +63,9 @@ bool gen_proof(void *keypair, void* h,
     //vector<uint8_t> new_solution(solution, solution+(n*n*n*n));
     
     auto proof = generate_proof<default_r1cs_ppzksnark_pp>(our_keypair->pk, in, solution);
+    return std::get<0>(*proof);;
 
+/*
     if (!proof) {
         return false;
     } else {
@@ -84,6 +88,7 @@ bool gen_proof(void *keypair, void* h,
 
         return true;
     }
+    * */
 }
 
 

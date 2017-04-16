@@ -38,6 +38,7 @@ r1cs_ppzksnark_keypair<ppzksnark_ppT> generate_keypair()
     inner_product_gadget<FieldT> g(pb, A, B, res, "compute_inner_product");
     
     g.generate_r1cs_constraints();
+    pb.constraint_system.num_inputs = 2;
     const r1cs_constraint_system<FieldT> constraint_system = pb.get_constraint_system();
 
     //cout << "Number of R1CS constraints: " << constraint_system.num_constraints() << endl;
@@ -58,7 +59,7 @@ boost::optional<std::tuple<r1cs_ppzksnark_proof<ppzksnark_ppT>, witnessT>>
 
     protoboard<FieldT> pb;
         // XXX
-    int new_num_constraints =  10;
+    int new_num_constraints =  1;
     pb_variable_array<FieldT> A;
     pb_variable_array<FieldT> B;
     pb_variable<FieldT> res;
@@ -70,20 +71,31 @@ boost::optional<std::tuple<r1cs_ppzksnark_proof<ppzksnark_ppT>, witnessT>>
 
     inner_product_gadget<FieldT> g(pb, A, B, res, "compute_inner_product");
     
+    
     g.generate_r1cs_constraints();
+    pb.constraint_system.num_inputs = 2;
 
     //auto new_puzzle = convertPuzzleToBool(puzzle);
     //auto new_solution = convertPuzzleToBool(solution);
     //auto encrypted_solution = xorSolution(new_solution, key);
+    
+    pb.val(A[0]) = FieldT::ONE;
+    pb.val(B[0]) = FieldT::ONE;
+
 
     g.generate_r1cs_witness();
-
+    
+     
     if (!pb.is_satisfied()) {
         return boost::none;
     }
+    
+    
+    
+    auto proof = r1cs_ppzksnark_prover<ppzksnark_ppT>(proving_key, pb.primary_input(), pb.auxiliary_input());
 
     return std::make_tuple(
-      r1cs_ppzksnark_prover<ppzksnark_ppT>(proving_key, pb.primary_input(), pb.auxiliary_input()),
+      proof,
       witness
     );
 }
