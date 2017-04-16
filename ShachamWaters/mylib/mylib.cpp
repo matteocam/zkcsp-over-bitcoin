@@ -49,18 +49,18 @@ void gen_keypair(void* h, keypair_callback cb) {
     cb(h, pk.c_str(), pk.length(), vk.c_str(), vk.length());
 }
 
-/*
+
 template<typename FieldT>
 bool gen_proof(void *keypair, void* h,
 							 proof_callback cb,
 							 const inputT<FieldT> &in,
-							 witnessT solution) {
+							 const witnessT solution) {
     auto our_keypair = reinterpret_cast<r1cs_ppzksnark_keypair<default_r1cs_ppzksnark_pp>*>(keypair);
 
-    vector<uint8_t> new_puzzle(puzzle, puzzle+(n*n*n*n));
-    vector<uint8_t> new_solution(solution, solution+(n*n*n*n));
+    //vector<uint8_t> new_puzzle(puzzle, puzzle+(n*n*n*n));
+    //vector<uint8_t> new_solution(solution, solution+(n*n*n*n));
     
-    auto proof = generate_proof<default_r1cs_ppzksnark_pp>(our_keypair->pk, x, y, a, p, new_solution);
+    auto proof = generate_proof<default_r1cs_ppzksnark_pp>(our_keypair->pk, in, solution);
 
     if (!proof) {
         return false;
@@ -68,24 +68,24 @@ bool gen_proof(void *keypair, void* h,
         auto actual_proof = std::get<0>(*proof);
         auto encrypted_solution = std::get<1>(*proof);
 
-        auto encrypted_solution_formatted = convertBoolToPuzzle(encrypted_solution);
+        //auto encrypted_solution_formatted = convertBoolToPuzzle(encrypted_solution);
         std::string proof_serialized;
         {
             std::stringstream ss;
             ss << actual_proof;
             proof_serialized = ss.str();
         }
-
-        assert(verify_proof(n, our_keypair->vk, actual_proof, new_puzzle, h_of_key, encrypted_solution));
+				
+				//assert(verify_proof(n, our_keypair->vk, actual_proof, new_puzzle, h_of_key, encrypted_solution));
 
 
         // ok
-        cb(h, n, &encrypted_solution_formatted[0], proof_serialized.c_str(), proof_serialized.length());
+        //cb(h, n, &encrypted_solution_formatted[0], proof_serialized.c_str(), proof_serialized.length());
 
         return true;
     }
 }
-* */
+
 
 template<typename FieldT>
 bool snark_verify(void* keypair,

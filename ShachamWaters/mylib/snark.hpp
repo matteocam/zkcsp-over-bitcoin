@@ -9,6 +9,8 @@ using namespace libsnark;
 template<typename FieldT>
 class inputT;
 
+typedef unsigned witnessT ; //XXX
+
 template<typename ppzksnark_ppT>
 bool verify_proof(r1cs_ppzksnark_verification_key<ppzksnark_ppT> verification_key,
 									r1cs_ppzksnark_proof<ppzksnark_ppT> proof,
@@ -17,14 +19,14 @@ bool verify_proof(r1cs_ppzksnark_verification_key<ppzksnark_ppT> verification_ke
 
 template<typename ppzksnark_ppT>
 r1cs_ppzksnark_keypair<ppzksnark_ppT> generate_keypair();
- /*                 
+                  
 template<typename ppzksnark_ppT>
 boost::optional<std::tuple<r1cs_ppzksnark_proof<ppzksnark_ppT>,std::vector<std::vector<bool>>>>
   generate_proof(r1cs_ppzksnark_proving_key<ppzksnark_ppT> proving_key,
-                 const inputT<FieldT> &in,
-                 std::vector<uint8_t> &witness
+                 const inputT<Fr<ppzksnark_ppT>> &in,
+                 const witnessT witness
                  );
-*/
+
 
 #include "snark.tcc"
 
