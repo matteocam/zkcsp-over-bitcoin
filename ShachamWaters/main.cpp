@@ -14,8 +14,7 @@ using namespace libsnark;
 
 
 template<typename ppT>
-bool run_r1cs_ppzksnark(const r1cs_example<Fr<ppT> > &example,
-                        const bool test_serialization)
+bool run_r1cs_ppzksnark(const r1cs_example<Fr<ppT> > &example)
 {
     print_header("R1CS ppzkSNARK Generator");
     r1cs_ppzksnark_keypair<ppT> keypair = r1cs_ppzksnark_generator<ppT>(example.constraint_system);
@@ -45,5 +44,8 @@ int main(int argc, char **argv)
 {
 	default_r1cs_ppzksnark_pp::init_public_params();
 	r1cs_example<Fr<default_r1cs_ppzksnark_pp> > example = generate_r1cs_example_with_binary_input<Fr<default_r1cs_ppzksnark_pp> >(20, 10);
+	bool it_works = run_r1cs_ppzksnark<default_r1cs_ppzksnark_pp>(example);
+	cout << endl;
+	cout << (it_works ? "It works!" : "It failed.") << endl;
 	return 0;
 }
