@@ -1,7 +1,7 @@
 
 template<typename FieldT>
 fair_auditing_gadget<FieldT>::fair_auditing_gadget(protoboard<FieldT> &pb) :
-        gadget<FieldT>(pb, FMT("", " l_gadget"))
+        gadget<FieldT>(pb)
 {
 	
 }

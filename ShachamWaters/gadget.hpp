@@ -7,6 +7,7 @@ using namespace libsnark;
 template<typename FieldT>
 class fair_auditing_gadget : public gadget<FieldT> {
 public:
+
     //unsigned int dimension;
 
 		/*
@@ -37,7 +38,15 @@ public:
 
     pb_variable_array<FieldT> puzzle_enforce;
     */
-
+		
+		const selector_gadget<FieldT> selector_g;
+		const sw_test_gadget<FieldT> sw_test_g; // Shacham-Waters test //  XXX: Should be made parametric
+		const sha256_compression_function_gadget<FieldT> sha_g;
+		const xor2<FieldT> xor2_g;
+		
+		
+		
+		
 
     fair_auditing_gadget(protoboard<FieldT> &pb);
     void generate_r1cs_constraints();
