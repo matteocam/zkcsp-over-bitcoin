@@ -1,0 +1,1 @@
+g++ -c -o mylib.o -std=c++11 -I/usr/include/libsnark -DUSE_ASM -DCURVE_ALT_BN128 mylib.cpp
