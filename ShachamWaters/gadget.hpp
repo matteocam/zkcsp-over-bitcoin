@@ -24,14 +24,20 @@ template<typename ppT>
 class check_pairing_eq_gadget : public gadget<Fr<ppT>> {
 public:
 		typedef Fr<ppT> FieldT;
-    check_pairing_eq_gadget(protoboard<Fr<ppT>> &pb,
-														std::shared_ptr<G1_variable<ppT> > a,
-														std::shared_ptr<G2_variable<ppT> > b,
-														std::shared_ptr<G1_variable<ppT> > c,
-														std::shared_ptr<G2_variable<ppT> > d);
+    check_pairing_eq_gadget(protoboard<Fr<ppT>> &pb
+														);
     void generate_r1cs_constraints();
     
-    void generate_r1cs_witness();
+    //void generate_r1cs_witness(G1<other_curve<ppT> > _a, G2<other_curve<ppT> > _b, G1<other_curve<ppT> > _c, G2<other_curve<ppT> > _d);
+    void generate_r1cs_witness(Fr<ppT> a_coef, Fr<ppT> b_coef,Fr<ppT> c_coef, Fr<ppT> d_coef);
+    
+    // variables
+    std::shared_ptr<G1_variable<ppT> > a;
+		std::shared_ptr<G2_variable<ppT> > b;
+		std::shared_ptr<G1_variable<ppT> > c;
+		std::shared_ptr<G2_variable<ppT> > d;
+		pb_variable<FieldT> is_valid; // XXX: Should this actually be a variable (or a value)?
+    
     
     // values
     std::shared_ptr<G1_precomputation<ppT> > a_precomp;
@@ -47,7 +53,7 @@ public:
     
     std::shared_ptr<check_e_equals_ee_gadget<ppT> > check_valid;
 
-    pb_variable<FieldT> is_valid; // XXX: Should this actually be a variable (or a value)?
+    
     
                                
 };
