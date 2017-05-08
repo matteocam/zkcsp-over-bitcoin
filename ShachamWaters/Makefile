@@ -1,6 +1,6 @@
 OPTFLAGS = -march=native -mtune=native -O2
 CXXFLAGS += -Wall -Wextra -Wno-unused-parameter -std=c++11 -Wno-unused-variable
-CXXFLAGS += -I /usr/include/libsnark -DUSE_ASM -DCURVE_ALT_BN128
+CXXFLAGS += -I /usr/include/libsnark -DUSE_ASM  -DCURVE_MNT6 # -DCURVE_ALT_BN128 -DCURVE_MNT4
 LDFLAGS += -flto
 
 LDLIBS += -lsnark -lgmp

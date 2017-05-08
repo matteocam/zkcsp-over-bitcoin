@@ -9,11 +9,8 @@ using namespace std;
 #include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp>
 #include <boost/optional.hpp>
-using namespace libsnark;
-
 #include "gadget.hpp"
-
-
+using namespace libsnark;
 
 template<typename ppT>
 bool run_r1cs_ppzksnark(const r1cs_example<Fr<ppT> > &example)
