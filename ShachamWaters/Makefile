@@ -7,8 +7,8 @@ LDLIBS += -lsnark -lgmp
 LDLIBS += -lboost_system
 
 all:
-	#$(CXX) -c -o gadget.o  $(CXXFLAGS) gadget.hpp
-	$(CXX) -o main   $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) main.cpp #gadget.o
+	#$(CXX)  -ggdb -c -o gadget.o  $(CXXFLAGS) gadget.hpp
+	$(CXX) -ggdb -o main   $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) main.cpp #gadget.o
 	
 clean:
 	$(RM) main

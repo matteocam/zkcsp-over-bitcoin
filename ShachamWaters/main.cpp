@@ -10,6 +10,8 @@ using namespace std;
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp>
 #include <boost/optional.hpp>
 #include "gadget.hpp"
+#include <libsnark/algebra/curves/mnt/mnt6/mnt6_init.hpp>
+#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
 using namespace libsnark;
 
 template<typename ppT>
@@ -38,42 +40,48 @@ bool run_r1cs_ppzksnark(const r1cs_example<Fr<ppT> > &example)
 
 	return ans;
 }
-/*
+
+
 template<typename ppT>
-r1cs_example<ppT> gen_check_pairing_example()
+r1cs_example<Fr<ppT>> gen_check_pairing_example()
 {
+	typedef Fr<ppT> FieldT;
 	const int num_inputs = 4;
 
 	protoboard<FieldT> pb;
-  sudoku_gadget<FieldT> g(pb, n);
+	
+  check_pairing_eq_gadget<ppT> g(pb);
   g.generate_r1cs_constraints();
-  const r1cs_constraint_system<FieldT> cs = pb.get_constraint_system();
+  pb.set_input_sizes(num_inputs);
+  auto cs = pb.get_constraint_system();
+  
 	
-	r1cs_variable_assignment<FieldT> full_variable_assignment;
-	auto a = FieldT::random_element();
-	auto b = FieldT::random_element();
-	full_variable_assignment.push_back(a);
-	full_variable_assignment.push_back(b);
+	auto a = FieldT(2);
+	auto b = FieldT(3);
+	g.generate_r1cs_witness(a, b, a, a);
 	
-	full_variable_assignment.push_back(fin.squared());
-
-	// split variable assignment 
-	r1cs_primary_input<FieldT> primary_input(full_variable_assignment.begin(), full_variable_assignment.begin() + num_inputs);
-	r1cs_primary_input<FieldT> auxiliary_input(full_variable_assignment.begin() + num_inputs, full_variable_assignment.end());
-
-	return r1cs_example<FieldT>(std::move(cs), std::move(primary_input), std::move(auxiliary_input));
+	return r1cs_example<FieldT>(std::move(cs), std::move(pb.primary_input()), std::move(pb.auxiliary_input()));
 }
-* */
+
+
 
 int main(int argc, char **argv)
 {
+	init_mnt4_params();
 	default_r1cs_ppzksnark_pp::init_public_params();
+	
+	
+	//test_G2_variable_precomp<default_r1cs_ppzksnark_pp>("");
+	//return 0;
+	
+	
 	r1cs_example<Fr<default_r1cs_ppzksnark_pp> > example = 
-	//	gen_check_pairing_example(); // XXX: Which field?
-		generate_r1cs_example_with_binary_input<Fr<default_r1cs_ppzksnark_pp> >(20, 10);
+		gen_check_pairing_example<default_r1cs_ppzksnark_pp >(); 
+		//generate_r1cs_example_with_binary_input<Fr<default_r1cs_ppzksnark_pp> >(20, 10);
 	
 	bool it_works = run_r1cs_ppzksnark<default_r1cs_ppzksnark_pp>(example);
 	cout << endl;
 	cout << (it_works ? "It works!" : "It failed.") << endl;
 	return 0;
+	
 }

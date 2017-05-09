@@ -1,10 +1,14 @@
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp>
 #include <libsnark/algebra/fields/field_utils.hpp>
+#include <algebra/curves/mnt/mnt4/mnt4_init.hpp>
+#include <algebra/curves/mnt/mnt6/mnt6_init.hpp>
 #include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g1_gadget.hpp>
 #include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g2_gadget.hpp>
 #include <libsnark/gadgetlib1/gadgets/pairing/pairing_checks.hpp>
 #include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
+#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
+
 
 
 namespace libsnark {
@@ -45,13 +49,17 @@ public:
     std::shared_ptr<G1_precomputation<ppT> > c_precomp;
     std::shared_ptr<G2_precomputation<ppT> > d_precomp;
     
+    std::shared_ptr<G1_precomputation<ppT> > one_g1_precomp;
+    std::shared_ptr<G2_precomputation<ppT> > one_g2_precomp;
+    
+    
     // gadgets
     std::shared_ptr<precompute_G1_gadget<ppT> > compute_a_precomp;
     std::shared_ptr<precompute_G2_gadget<ppT> > compute_b_precomp;
     std::shared_ptr<precompute_G1_gadget<ppT> > compute_c_precomp;
     std::shared_ptr<precompute_G2_gadget<ppT> > compute_d_precomp;
     
-    std::shared_ptr<check_e_equals_ee_gadget<ppT> > check_valid;
+    std::shared_ptr<check_e_equals_e_gadget<ppT> > check_valid;
 
     
     

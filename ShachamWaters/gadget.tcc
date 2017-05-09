@@ -36,16 +36,19 @@ check_pairing_eq_gadget<ppT>::check_pairing_eq_gadget(protoboard<Fr<ppT>> &pb) :
 																gadget<Fr<ppT>>(pb)
 {
 	// variables
-	a.reset(new G1_variable<ppT>(pb));
-	b.reset(new G2_variable<ppT>(pb));
-	c.reset(new G1_variable<ppT>(pb));
-	d.reset(new G2_variable<ppT>(pb));
+	a.reset(new G1_variable<ppT>(pb, ""));
+	b.reset(new G2_variable<ppT>(pb, ""));
+	c.reset(new G1_variable<ppT>(pb, ""));
+	d.reset(new G2_variable<ppT>(pb, ""));
 	
 	// Precomputations (values)
 	a_precomp.reset(new G1_precomputation<ppT>());
 	b_precomp.reset(new G2_precomputation<ppT>());
 	c_precomp.reset(new G1_precomputation<ppT>());
 	d_precomp.reset(new G2_precomputation<ppT>());
+	
+	one_g1_precomp.reset(new G1_precomputation<ppT>(pb, G1<other_curve<ppT> >::one(), ""));
+	one_g2_precomp.reset(new G2_precomputation<ppT>(pb, G2<other_curve<ppT> >::one(), ""));
 	
 	// Precomputations (gadgets)
 	compute_a_precomp.reset(
@@ -94,11 +97,7 @@ check_pairing_eq_gadget<ppT>::check_pairing_eq_gadget(protoboard<Fr<ppT>> &pb) :
 template<typename ppT>
 void check_pairing_eq_gadget<ppT>::generate_r1cs_constraints()
 {
-		a.generate_r1cs_constraints();
-		b.generate_r1cs_constraints();
-		c.generate_r1cs_constraints();
-		d.generate_r1cs_constraints();
-	
+
 		compute_a_precomp->generate_r1cs_constraints();
 		compute_b_precomp->generate_r1cs_constraints();
 		compute_c_precomp->generate_r1cs_constraints();
@@ -110,10 +109,15 @@ void check_pairing_eq_gadget<ppT>::generate_r1cs_constraints()
 template<typename ppT>
 void check_pairing_eq_gadget<ppT>::generate_r1cs_witness(Fr<ppT> a_coef, Fr<ppT> b_coef,Fr<ppT> c_coef, Fr<ppT> d_coef)
 {
-		a->generate_r1cs_witness(a_coef*G1<other_curve<ppT> >::one());
-		b->generate_r1cs_witness(b_coef*G2<other_curve<ppT> >::one());
-		c->generate_r1cs_witness(c_coef*G2<other_curve<ppT> >::one());
-		d->generate_r1cs_witness(d_coef*G2<other_curve<ppT> >::one());
+		auto A = a_coef*G1<other_curve<ppT> >::one();
+		a->generate_r1cs_witness(A);
+		auto B = b_coef*G2<other_curve<ppT> >::one();
+		b->generate_r1cs_witness(B);
+		auto C = c_coef*G1<other_curve<ppT> >::one();
+		c->generate_r1cs_witness(C);
+		auto D = d_coef*G2<other_curve<ppT> >::one();
+		d->generate_r1cs_witness(D);
+		
 
 		compute_a_precomp->generate_r1cs_witness();
 		compute_b_precomp->generate_r1cs_witness();
