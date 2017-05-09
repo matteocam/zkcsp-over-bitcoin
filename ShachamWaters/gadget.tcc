@@ -30,7 +30,8 @@ void fair_auditing_gadget<ppT>::generate_r1cs_witness()
 }
 
 template<typename ppT>
-my_add_G1_gadget<ppT>::my_add_G1_gadget(protoboard<Fr<ppT>> &pb)
+my_add_G1_gadget<ppT>::my_add_G1_gadget(protoboard<Fr<ppT>> &pb) :
+																gadget<Fr<ppT>>(pb)
 {
 	// variables
 	a.reset(new G1_variable<ppT>(pb, ""));
@@ -38,27 +39,24 @@ my_add_G1_gadget<ppT>::my_add_G1_gadget(protoboard<Fr<ppT>> &pb)
 	c.reset(new G1_variable<ppT>(pb, ""));
 	
 	// checkers
-	check_a.reset(new G1_checker_gadget<ppT>(pb, a, ""));
-	check_b.reset(new G1_checker_gadget<ppT>(pb, b, ""));
-	check_c.reset(new G1_checker_gadget<ppT>(pb, c, ""));
+	check_a.reset(new G1_checker_gadget<ppT>(pb, *a, ""));
+	check_b.reset(new G1_checker_gadget<ppT>(pb, *b, ""));
+	check_c.reset(new G1_checker_gadget<ppT>(pb, *c, ""));
 	
 	// add 
-	compute_add.reset(new G1_add_gadget<ppT>(pb, a, b, c, ""));
+	compute_add.reset(new G1_add_gadget<ppT>(pb, *a, *b, *c, ""));
 	
 }
 
 template<typename ppT>
 void my_add_G1_gadget<ppT>::generate_r1cs_constraints()
 {
-	a->generate_r1cs_constraints();
-	b->generate_r1cs_constraints();
-	c->generate_r1cs_constraints();
 	
 	check_a->generate_r1cs_constraints();
 	check_b->generate_r1cs_constraints();
 	check_c->generate_r1cs_constraints();
 	
-	compute_add.generate_r1cs_constraints();
+	compute_add->generate_r1cs_constraints();
 }
 
 template<typename ppT>
@@ -70,11 +68,11 @@ void my_add_G1_gadget<ppT>::generate_r1cs_witness(const G1<other_curve<ppT> > &A
 	b->generate_r1cs_witness(B);
 	c->generate_r1cs_witness(C);
 	
-	check_a->generate_r1cs_witness(A);
-	check_b->generate_r1cs_witness(B);
-	check_c->generate_r1cs_witness(C);
+	check_a->generate_r1cs_witness();
+	check_b->generate_r1cs_witness();
+	check_c->generate_r1cs_witness();
 	
-	compute_add.generate_r1cs_witness();
+	compute_add->generate_r1cs_witness();
 }																												 
 																												 
 																										

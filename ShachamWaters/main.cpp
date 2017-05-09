@@ -72,6 +72,28 @@ r1cs_example<Fr<ppT>> gen_check_pairing_example()
 }
 
 template<typename ppT>
+r1cs_example<Fr<ppT>> gen_my_add_G1_example()
+{
+	typedef Fr<ppT> FieldT;
+	
+
+	protoboard<FieldT> pb;
+	
+  my_add_G1_gadget<ppT> g(pb);
+  const int num_inputs = g.num_input_variables();
+  g.generate_r1cs_constraints();
+  pb.set_input_sizes(num_inputs);
+  auto cs = pb.get_constraint_system();
+  
+	auto a = FieldT(2)*G1<other_curve<ppT>>::one();
+	auto b = FieldT(3)*G1<other_curve<ppT>>::one();
+	auto c = a+b;
+	g.generate_r1cs_witness(a, b, c);
+	
+	return r1cs_example<FieldT>(std::move(cs), std::move(pb.primary_input()), std::move(pb.auxiliary_input()));
+}
+
+template<typename ppT>
 r1cs_example<Fr<ppT>> gen_output_selector_example()
 {
 	typedef Fr<ppT> FieldT;
@@ -105,7 +127,8 @@ int main(int argc, char **argv)
 	
 	r1cs_example<Fr<default_r1cs_ppzksnark_pp> > example = 
 		//gen_output_selector_example<default_r1cs_ppzksnark_pp>(); 
-		gen_check_pairing_example<default_r1cs_ppzksnark_pp >(); 
+		//gen_check_pairing_example<default_r1cs_ppzksnark_pp >(); 
+		gen_my_add_G1_example<default_r1cs_ppzksnark_pp >(); 
 		//generate_r1cs_example_with_binary_input<Fr<default_r1cs_ppzksnark_pp> >(20, 10);
 	
 	bool it_works = run_r1cs_ppzksnark<default_r1cs_ppzksnark_pp>(example);

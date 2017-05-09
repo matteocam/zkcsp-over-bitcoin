@@ -39,6 +39,11 @@ public:
 	void generate_r1cs_witness(const G1<other_curve<ppT> > &A,
 														 const G1<other_curve<ppT> > &B,
 														 const G1<other_curve<ppT> > &C);
+														 
+		unsigned num_input_variables()
+	{
+		return a->num_variables() + b->num_variables();
+	}
                                
 };
 
