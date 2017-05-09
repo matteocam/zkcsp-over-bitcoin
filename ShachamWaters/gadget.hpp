@@ -25,6 +25,24 @@ public:
 };
 
 template<typename ppT>
+class my_add_G1_gadget : public gadget<Fr<ppT>> {
+public:
+	typedef Fr<ppT> FieldT;
+	
+	std::shared_ptr<G1_variable<ppT> > a, b, c;
+	std::shared_ptr<G1_checker_gadget<ppT> > check_a, check_b, check_c;
+	std::shared_ptr<G1_add_gadget<ppT> > compute_add;
+	
+	my_add_G1_gadget(protoboard<FieldT> &pb);
+	void generate_r1cs_constraints();
+    
+	void generate_r1cs_witness(const G1<other_curve<ppT> > &A,
+														 const G1<other_curve<ppT> > &B,
+														 const G1<other_curve<ppT> > &C);
+                               
+};
+
+template<typename ppT>
 class output_selector_gadget : public gadget<Fr<ppT>> {
 public:
 	typedef Fr<ppT> FieldT;
@@ -35,7 +53,7 @@ public:
 	output_selector_gadget(protoboard<FieldT> &pb, pb_variable<FieldT> &t, pb_variable_array<FieldT> &r);
 	void generate_r1cs_constraints();
     
-	void generate_r1cs_witness();
+	void generate_r1cs_witness(vector<bool>);
                                
 };
 
@@ -47,8 +65,16 @@ public:
 	void generate_r1cs_constraints();
     
 	//void generate_r1cs_witness(G1<other_curve<ppT> > _a, G2<other_curve<ppT> > _b, G1<other_curve<ppT> > _c, G2<other_curve<ppT> > _d);
-	void generate_r1cs_witness(Fr<ppT> a_coef, Fr<ppT> b_coef,Fr<ppT> c_coef, Fr<ppT> d_coef);
-    
+	void generate_r1cs_witness(const G1<other_curve<ppT> > &A,
+														 const G2<other_curve<ppT> > &B,
+														 const G1<other_curve<ppT> > &C,
+														 const G2<other_curve<ppT> > &D);
+	
+	unsigned num_input_variables()
+	{
+		return a->num_variables() + b->num_variables() + c->num_variables() + d->num_variables();
+	}
+
 	// variables
 	std::shared_ptr<G1_variable<ppT> > a;
 	std::shared_ptr<G2_variable<ppT> > b;

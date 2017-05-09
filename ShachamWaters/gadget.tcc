@@ -29,6 +29,55 @@ void fair_auditing_gadget<ppT>::generate_r1cs_witness()
 {
 }
 
+template<typename ppT>
+my_add_G1_gadget<ppT>::my_add_G1_gadget(protoboard<Fr<ppT>> &pb)
+{
+	// variables
+	a.reset(new G1_variable<ppT>(pb, ""));
+	b.reset(new G1_variable<ppT>(pb, ""));
+	c.reset(new G1_variable<ppT>(pb, ""));
+	
+	// checkers
+	check_a.reset(new G1_checker_gadget<ppT>(pb, a, ""));
+	check_b.reset(new G1_checker_gadget<ppT>(pb, b, ""));
+	check_c.reset(new G1_checker_gadget<ppT>(pb, c, ""));
+	
+	// add 
+	compute_add.reset(new G1_add_gadget<ppT>(pb, a, b, c, ""));
+	
+}
+
+template<typename ppT>
+void my_add_G1_gadget<ppT>::generate_r1cs_constraints()
+{
+	a->generate_r1cs_constraints();
+	b->generate_r1cs_constraints();
+	c->generate_r1cs_constraints();
+	
+	check_a->generate_r1cs_constraints();
+	check_b->generate_r1cs_constraints();
+	check_c->generate_r1cs_constraints();
+	
+	compute_add.generate_r1cs_constraints();
+}
+
+template<typename ppT>
+void my_add_G1_gadget<ppT>::generate_r1cs_witness(const G1<other_curve<ppT> > &A,
+																								  const G1<other_curve<ppT> > &B,
+																								  const G1<other_curve<ppT> > &C)
+{
+	a->generate_r1cs_witness(A);
+	b->generate_r1cs_witness(B);
+	c->generate_r1cs_witness(C);
+	
+	check_a->generate_r1cs_witness(A);
+	check_b->generate_r1cs_witness(B);
+	check_c->generate_r1cs_witness(C);
+	
+	compute_add.generate_r1cs_witness();
+}																												 
+																												 
+																										
 
 template<typename ppT>
 output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb, pb_variable<Fr<ppT>> &t, pb_variable_array<Fr<ppT>> &r)
@@ -50,14 +99,15 @@ output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb, pb_
 template<typename ppT>
 void output_selector_gadget<ppT>::generate_r1cs_constraints()
 {
-	compute_sha_r.generate_r1cs_constraints();
-	sha_r.generate_r1cs_constraints();
+	compute_sha_r->generate_r1cs_constraints();
+	sha_r->generate_r1cs_constraints();
 }
 
 template<typename ppT>
-void output_selector_gadget<ppT>::generate_r1cs_witness()
+void output_selector_gadget<ppT>::generate_r1cs_witness(vector<bool> sha_r_bits)
 {
-	
+	compute_sha_r->generate_r1cs_witness();
+	sha_r->generate_r1cs_witness(sha_r_bits);
 }
 
 
@@ -66,7 +116,6 @@ template<typename ppT>
 check_pairing_eq_gadget<ppT>::check_pairing_eq_gadget(protoboard<Fr<ppT>> &pb) :
 																gadget<Fr<ppT>>(pb)
 {
-	// XXX: Needs to add checks that A = a*P1 and so for all a,b,c,d
 	
 	// variables
 	a.reset(new G1_variable<ppT>(pb, ""));
@@ -135,18 +184,22 @@ void check_pairing_eq_gadget<ppT>::generate_r1cs_constraints()
 		compute_d_precomp->generate_r1cs_constraints();
 
 		check_valid->generate_r1cs_constraints(); 
+		//is_valid->generate_r1cs_constraints();
 }
 
 template<typename ppT>
-void check_pairing_eq_gadget<ppT>::generate_r1cs_witness(Fr<ppT> a_coef, Fr<ppT> b_coef,Fr<ppT> c_coef, Fr<ppT> d_coef)
+void check_pairing_eq_gadget<ppT>::generate_r1cs_witness(const G1<other_curve<ppT> > &A,
+																												 const G2<other_curve<ppT> > &B,
+																												 const G1<other_curve<ppT> > &C,
+																												 const G2<other_curve<ppT> > &D)
 {
-		auto A = a_coef*G1<other_curve<ppT> >::one();
+		//auto A = a_coef*G1<other_curve<ppT> >::one();
 		a->generate_r1cs_witness(A);
-		auto B = b_coef*G2<other_curve<ppT> >::one();
+		//auto B = b_coef*G2<other_curve<ppT> >::one();
 		b->generate_r1cs_witness(B);
-		auto C = c_coef*G1<other_curve<ppT> >::one();
+		//auto C = c_coef*G1<other_curve<ppT> >::one();
 		c->generate_r1cs_witness(C);
-		auto D = d_coef*G2<other_curve<ppT> >::one();
+		//auto D = d_coef*G2<other_curve<ppT> >::one();
 		d->generate_r1cs_witness(D);
 		
 
@@ -156,4 +209,5 @@ void check_pairing_eq_gadget<ppT>::generate_r1cs_witness(Fr<ppT> a_coef, Fr<ppT>
 		compute_d_precomp->generate_r1cs_witness();
 
 		check_valid->generate_r1cs_witness(); 
+		//is_valid->generate_r1cs_witness();
 }
