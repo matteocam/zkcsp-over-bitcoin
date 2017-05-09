@@ -1,14 +1,16 @@
-OPTFLAGS = -march=native -mtune=native -O2
-CXXFLAGS += -Wall -Wextra -Wno-unused-parameter -std=c++11 -Wno-unused-variable
-CXXFLAGS += -I /usr/include/libsnark -DUSE_ASM  -DCURVE_MNT6 # -DCURVE_ALT_BN128 -DCURVE_MNT4
-LDFLAGS += -flto
+#OPTFLAGS = -march=native -mtune=native -O2
+#CXXFLAGS += -Wall -Wextra -Wno-unused-parameter -std=c++11 -Wno-unused-variable
+#CXXFLAGS += -I /usr/include/libsnark -DUSE_ASM  -DCURVE_MNT6 # -DCURVE_ALT_BN128 -DCURVE_MNT4
+#LDFLAGS += -flto
 
-LDLIBS += -lsnark -lgmp
-LDLIBS += -lboost_system
+#LDLIBS += -lsnark -lgmp
+#LDLIBS += -lboost_system
 
-all:
+
 	#$(CXX)  -ggdb -c -o gadget.o  $(CXXFLAGS) gadget.hpp
-	$(CXX) -ggdb -o main   $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) main.cpp #gadget.o
+	#$(CXX) -ggdb -o main   $(CXXFLAGS) $(LDFLAGS) $(LDLIBS) main.cpp #gadget.o
+all:
+	g++ -ggdb -o main -std=c++11 -I/usr/include/libsnark -lsnark -lgmp -DUSE_ASM -DCURVE_MNT6 main.cpp	
 	
 clean:
 	$(RM) main

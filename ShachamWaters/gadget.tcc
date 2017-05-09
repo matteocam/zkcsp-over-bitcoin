@@ -30,11 +30,44 @@ void fair_auditing_gadget<ppT>::generate_r1cs_witness()
 }
 
 
+template<typename ppT>
+output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb, pb_variable<Fr<ppT>> &t, pb_variable_array<Fr<ppT>> &r)
+{
+	// SHA
+	sha_r.reset(new digest_variable<FieldT>(pb, 256, "sha_r"));
+	
+	compute_sha_r.reset(
+		new sha256_compression_function_gadget<FieldT>(
+			pb,
+			SHA256_default_IV<FieldT>(pb),
+			r,
+			sha_r,
+			""));
+
+	
+}
+
+template<typename ppT>
+void output_selector_gadget<ppT>::generate_r1cs_constraints()
+{
+	compute_sha_r.generate_r1cs_constraints();
+	sha_r.generate_r1cs_constraints();
+}
+
+template<typename ppT>
+void output_selector_gadget<ppT>::generate_r1cs_witness()
+{
+	
+}
+
+
 
 template<typename ppT>
 check_pairing_eq_gadget<ppT>::check_pairing_eq_gadget(protoboard<Fr<ppT>> &pb) :
 																gadget<Fr<ppT>>(pb)
 {
+	// XXX: Needs to add checks that A = a*P1 and so for all a,b,c,d
+	
 	// variables
 	a.reset(new G1_variable<ppT>(pb, ""));
 	b.reset(new G2_variable<ppT>(pb, ""));
@@ -47,8 +80,6 @@ check_pairing_eq_gadget<ppT>::check_pairing_eq_gadget(protoboard<Fr<ppT>> &pb) :
 	c_precomp.reset(new G1_precomputation<ppT>());
 	d_precomp.reset(new G2_precomputation<ppT>());
 	
-	one_g1_precomp.reset(new G1_precomputation<ppT>(pb, G1<other_curve<ppT> >::one(), ""));
-	one_g2_precomp.reset(new G2_precomputation<ppT>(pb, G2<other_curve<ppT> >::one(), ""));
 	
 	// Precomputations (gadgets)
 	compute_a_precomp.reset(

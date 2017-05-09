@@ -56,9 +56,10 @@ r1cs_example<Fr<ppT>> gen_check_pairing_example()
   auto cs = pb.get_constraint_system();
   
 	
+	auto one = FieldT::one();
 	auto a = FieldT(2);
 	auto b = FieldT(3);
-	g.generate_r1cs_witness(a, b, a, a);
+	g.generate_r1cs_witness(a, one, b, one);
 	
 	return r1cs_example<FieldT>(std::move(cs), std::move(pb.primary_input()), std::move(pb.auxiliary_input()));
 }
@@ -69,11 +70,6 @@ int main(int argc, char **argv)
 {
 	init_mnt4_params();
 	default_r1cs_ppzksnark_pp::init_public_params();
-	
-	
-	//test_G2_variable_precomp<default_r1cs_ppzksnark_pp>("");
-	//return 0;
-	
 	
 	r1cs_example<Fr<default_r1cs_ppzksnark_pp> > example = 
 		gen_check_pairing_example<default_r1cs_ppzksnark_pp >(); 
