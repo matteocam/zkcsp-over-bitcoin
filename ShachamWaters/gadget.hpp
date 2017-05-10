@@ -9,9 +9,13 @@
 #include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
 #include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
 
-using namespace libsnark;
-
 const int digest_size = 2; // XXX: Should be 256
+
+template<typename ppT>
+class output_selector_gadget;
+
+template<typename ppT>
+class check_pairing_eq_gadget;
 
 template<typename ppT>
 class fair_auditing_gadget : public gadget<Fr<ppT>> {
@@ -51,7 +55,7 @@ public:
 														 const bit_vector &r_val);
 	
 	unsigned num_input_variables() const {
-		return M.num_variables() + y.num_variables() + g.num_variables() + digest_size /* r */ + digest_size /* alleged_digest */ ;
+		return M->num_variables() + y->num_variables() + g->num_variables() + digest_size /* r */ + digest_size /* alleged_digest */ ;
 	}
                                
 };
@@ -87,9 +91,13 @@ public:
 	std::shared_ptr<sha256_compression_function_gadget<FieldT>> compute_sha_r;
 	std::shared_ptr<digest_variable<FieldT>> sha_r;
 	
+	const pb_variable<FieldT> &t;
+	const pb_variable_array<FieldT> &r;
+	
+	
 	pb_variable_array<FieldT> selected_digest;
  
-	output_selector_gadget(protoboard<FieldT> &pb, pb_variable<FieldT> &t, pb_variable_array<FieldT> &r);
+	output_selector_gadget(protoboard<FieldT> &pb, const pb_variable<FieldT> &t, const pb_variable_array<FieldT> &r);
 	void generate_r1cs_constraints();
     
 	void generate_r1cs_witness();
@@ -141,3 +149,4 @@ public:
 
 };
 
+#include "gadget.tcc"

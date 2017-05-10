@@ -23,7 +23,7 @@ fair_auditing_gadget<ppT>::fair_auditing_gadget(protoboard<Fr<ppT>> &pb) :
 	check_sigma.reset(new G1_checker_gadget<ppT>(pb, *sigma, ""));
 	
 	pairing_check.reset(new check_pairing_eq_gadget<ppT>(pb, sigma, g, M, y));
-	selector.reset(new output_selector_gadget(pb, pairing_check->is_valid, r);
+	selector.reset(new output_selector_gadget<ppT>(pb, pairing_check->is_valid, r));
 	
 	this->pb.set_input_sizes(num_input_variables());
 	
@@ -53,7 +53,7 @@ void fair_auditing_gadget<ppT>::generate_r1cs_constraints()
 	
 	// check that alleged digest and the selector's output are the same
 	for (auto i = 0; i < digest_size; i++) {
-		this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(alleged_digest[i], 1, selected_digest[i]), "alleged_diges == selected_digest");
+		this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(alleged_digest[i], 1, selector->selected_digest[i]), "alleged_diges == selected_digest");
 	}
 	
 }
@@ -70,13 +70,13 @@ void fair_auditing_gadget<ppT>::generate_r1cs_witness(
 	M->generate_r1cs_witness(M_val);
 	y->generate_r1cs_witness(y_val);
 	g->generate_r1cs_witness(g_val);
-	alleged_digest.fill_with_bits(pb, alleged_digest_val);
+	alleged_digest.fill_with_bits(this->pb, alleged_digest_val);
 	
 	sigma->generate_r1cs_witness(sigma_val);
-	r.fill_with_bits(pb, r_val);
+	r.fill_with_bits(this->pb, r_val);
 	
-	pairing_check->generate_witness();
-	selector->generate_witness();
+	pairing_check->generate_r1cs_witness();
+	selector->generate_r1cs_witness();
 }
 
 template<typename ppT>
@@ -128,7 +128,7 @@ void my_add_G1_gadget<ppT>::generate_r1cs_witness(const G1<other_curve<ppT> > &A
 																										
 
 template<typename ppT>
-output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb, pb_variable<Fr<ppT>> &t, pb_variable_array<Fr<ppT>> &r)
+output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb, const pb_variable<Fr<ppT>> &t, const pb_variable_array<Fr<ppT>> &r)
 {
 	// SHA
 	/*
@@ -144,6 +144,8 @@ output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb, pb_
 		
 		*/	
 	selected_digest.allocate(pb, digest_size, "");
+	this->t = t;
+	this->r = r;
 
 	
 }
@@ -154,7 +156,7 @@ void output_selector_gadget<ppT>::generate_r1cs_constraints()
 	//compute_sha_r->generate_r1cs_constraints();
 	//sha_r->generate_r1cs_constraints();
 	
-	for (auto i : digest_size) {
+	for (auto i = 0; i < digest_size; i++) {
 					this->pb.add_r1cs_constraint(
 						r1cs_constraint<FieldT>(selected_digest[i], 1, t*r[i]), // XXX (should be modified as generate_r1cs_witness should)
 						"selected_digest as IF output");
@@ -168,7 +170,7 @@ void output_selector_gadget<ppT>::generate_r1cs_witness()
 	//compute_sha_r->generate_r1cs_witness();
 	//sha_r->generate_r1cs_witness(sha_r_bits);
 	
-	for (auto i : digest_size) {
+	for (auto i = 0; i < digest_size; i++) {
 		// XXX: Should be sha_r[i] or r_xor_sha_r[i] as options
 		this->pb.val(selected_digest[i]) = this->pb.val(t)*this->pb.val(r); // + (1-this->pb.val(t))*this->pb.val(); // For now it's r or 0
 	}

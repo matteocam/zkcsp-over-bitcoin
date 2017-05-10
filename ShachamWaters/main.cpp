@@ -3,16 +3,19 @@
 #include <type_traits>
 using namespace std;
 
+
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
 #include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp>
 #include <libsnark/common/utils.hpp>
 #include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
 #include <libsnark/relations/constraint_satisfaction_problems/r1cs/examples/r1cs_examples.hpp>
 #include <boost/optional.hpp>
-#include "gadget.hpp"
+#include <libsnark/algebra/curves/mnt/mnt4/mnt4_init.hpp>
 #include <libsnark/algebra/curves/mnt/mnt6/mnt6_init.hpp>
 #include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
 using namespace libsnark;
+
+#include "gadget.hpp"
 
 void hexToBits(const vector<uint8_t> &hex, bit_vector &out)
 {
@@ -109,14 +112,14 @@ r1cs_example<Fr<ppT>> gen_BLS_example()
   auto cs = pb.get_constraint_system();
   
 	auto sigma = FieldT(2)*G1<other_curve<ppT>>::one();
-	auto g = FieldT(3)*G1<other_curve<ppT>>::one();
+	auto gen = FieldT(3)*G2<other_curve<ppT>>::one();
 	auto M = sigma;
-	auto y = g;
+	auto y = gen;
 	
-	bool r[] = {1,1};
-	bool ad[] = [1,1};
+	bit_vector r({1,1});
+	bit_vector ad({1,1});
 	
-	g.generate_r1cs_witness(M, y, g, ad, sigma, r);
+	g.generate_r1cs_witness(M, y, gen, ad, sigma, r);
 	
 	return r1cs_example<FieldT>(std::move(cs), std::move(pb.primary_input()), std::move(pb.auxiliary_input()));
 }
