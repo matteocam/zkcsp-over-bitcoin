@@ -114,8 +114,9 @@ r1cs_example<Fr<ppT>> gen_BLS_example()
 	auto y = g;
 	
 	bool r[] = {1,1};
+	bool ad[] = [1,1};
 	
-	g.generate_r1cs_witness(M, y, g, sigma, r);
+	g.generate_r1cs_witness(M, y, g, ad, sigma, r);
 	
 	return r1cs_example<FieldT>(std::move(cs), std::move(pb.primary_input()), std::move(pb.auxiliary_input()));
 }

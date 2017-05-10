@@ -46,11 +46,12 @@ public:
 	void generate_r1cs_witness(const G1<other_curve<ppT> > &M_val,
 														 const G2<other_curve<ppT> > &y_val,
 														 const G2<other_curve<ppT> > &g_val,
+														 const bit_vector &alleged_digest_val,
 														 const G1<other_curve<ppT> > &sigma_val,
 														 const bit_vector &r_val);
 	
 	unsigned num_input_variables() const {
-		return M.num_variables() + y.num_variables() + g.num_variables() + digest_size;
+		return M.num_variables() + y.num_variables() + g.num_variables() + digest_size /* r */ + digest_size /* alleged_digest */ ;
 	}
                                
 };
