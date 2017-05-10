@@ -182,7 +182,8 @@ void check_pairing_eq_gadget<ppT>::generate_r1cs_constraints()
 		compute_d_precomp->generate_r1cs_constraints();
 
 		check_valid->generate_r1cs_constraints(); 
-		//is_valid->generate_r1cs_constraints();
+		
+		this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(is_valid, 1, 1), "is_valid should be 1");
 }
 
 template<typename ppT>
