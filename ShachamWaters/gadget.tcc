@@ -128,7 +128,12 @@ void my_add_G1_gadget<ppT>::generate_r1cs_witness(const G1<other_curve<ppT> > &A
 																										
 
 template<typename ppT>
-output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb, const pb_variable<Fr<ppT>> &t, const pb_variable_array<Fr<ppT>> &r)
+output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb,
+																										const pb_variable<Fr<ppT>> &_t,
+																										const pb_variable_array<Fr<ppT>> &_r) :
+																										gadget<Fr<ppT>>(pb),
+																										t(_t),
+																										r(_r)
 {
 	// SHA
 	/*
@@ -144,10 +149,7 @@ output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb, con
 		
 		*/	
 	selected_digest.allocate(pb, digest_size, "");
-	this->t = t;
-	this->r = r;
 
-	
 }
 
 template<typename ppT>
@@ -158,7 +160,7 @@ void output_selector_gadget<ppT>::generate_r1cs_constraints()
 	
 	for (auto i = 0; i < digest_size; i++) {
 					this->pb.add_r1cs_constraint(
-						r1cs_constraint<FieldT>(selected_digest[i], 1, t*r[i]), // XXX (should be modified as generate_r1cs_witness should)
+						r1cs_constraint<FieldT>(t, r[i], selected_digest[i]), // XXX (should be modified as generate_r1cs_witness should)
 						"selected_digest as IF output");
 	}
 	
@@ -172,7 +174,7 @@ void output_selector_gadget<ppT>::generate_r1cs_witness()
 	
 	for (auto i = 0; i < digest_size; i++) {
 		// XXX: Should be sha_r[i] or r_xor_sha_r[i] as options
-		this->pb.val(selected_digest[i]) = this->pb.val(t)*this->pb.val(r); // + (1-this->pb.val(t))*this->pb.val(); // For now it's r or 0
+		this->pb.val(selected_digest[i]) = this->pb.val(t)*this->pb.val(r[i]); // + (1-this->pb.val(t))*this->pb.val(); // For now it's r or 0
 	}
 }
 

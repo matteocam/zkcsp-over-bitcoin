@@ -91,13 +91,13 @@ public:
 	std::shared_ptr<sha256_compression_function_gadget<FieldT>> compute_sha_r;
 	std::shared_ptr<digest_variable<FieldT>> sha_r;
 	
-	const pb_variable<FieldT> &t;
-	const pb_variable_array<FieldT> &r;
+	const pb_variable<FieldT> t;
+	const pb_variable_array<FieldT> r;
 	
 	
 	pb_variable_array<FieldT> selected_digest;
  
-	output_selector_gadget(protoboard<FieldT> &pb, const pb_variable<FieldT> &t, const pb_variable_array<FieldT> &r);
+	output_selector_gadget(protoboard<FieldT> &pb, const pb_variable<FieldT> &, const pb_variable_array<FieldT> &);
 	void generate_r1cs_constraints();
     
 	void generate_r1cs_witness();
