@@ -9,7 +9,7 @@
 #include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
 #include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
 
-const int digest_size = 2; // XXX: Should be 256
+const int digest_size = 256;
 
 template<typename ppT>
 class output_selector_gadget;
@@ -89,11 +89,13 @@ public:
 	typedef Fr<ppT> FieldT;
 
 	std::shared_ptr<sha256_compression_function_gadget<FieldT>> compute_sha_r;
-	std::shared_ptr<digest_variable<FieldT>> sha_r;
+	std::shared_ptr<digest_variable<FieldT>> sha_r, padding_var;
+	std::shared_ptr<block_variable<FieldT>> block;
 	
 	const pb_variable<FieldT> t;
 	const pb_variable_array<FieldT> r;
 	
+	pb_variable_array<FieldT> tmp1, tmp2, xor_r;
 	
 	pb_variable_array<FieldT> selected_digest;
  
@@ -101,6 +103,17 @@ public:
 	void generate_r1cs_constraints();
     
 	void generate_r1cs_witness();
+	
+	bit_vector sha_padding() const
+	{
+			const unsigned num_zeros = 256 - 64;
+			bit_vector padding(num_zeros, false);
+			// add 64 bit representation of 512 (our total block length)
+			for (auto i = 1; i <= 64; i++) {
+				padding.push_back(i == 54); // using the fact that [512]_b is 1 followed by 9 zeros
+			}
+			return padding;
+	}
                                
 };
 

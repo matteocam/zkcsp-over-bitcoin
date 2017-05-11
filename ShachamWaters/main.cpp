@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <type_traits>
 using namespace std;
 
@@ -98,6 +99,16 @@ r1cs_example<Fr<ppT>> gen_my_add_G1_example()
 	return r1cs_example<FieldT>(std::move(cs), std::move(pb.primary_input()), std::move(pb.auxiliary_input()));
 }
 
+void read_bits_from_file(const char *fn, bit_vector &v)
+{
+	ifstream in(fn);
+	char c;
+	for (auto i = 0; i < 256; i++) {
+		in >> c;
+		v.push_back(c-'0');
+	}
+}
+
 template<typename ppT>
 r1cs_example<Fr<ppT>> gen_BLS_example()
 {
@@ -114,10 +125,13 @@ r1cs_example<Fr<ppT>> gen_BLS_example()
 	auto sigma = FieldT(2)*G1<other_curve<ppT>>::one();
 	auto gen = FieldT(3)*G2<other_curve<ppT>>::one();
 	auto M = sigma;
-	auto y = gen;
+	auto y = FieldT(3)*G2<other_curve<ppT>>::one();;
 	
-	bit_vector r({1,1});
-	bit_vector ad({1,1});
+	bit_vector r;
+	bit_vector ad;
+	
+	read_bits_from_file("test_r", r);
+	read_bits_from_file("test_sha_r", ad);
 	
 	g.generate_r1cs_witness(M, y, gen, ad, sigma, r);
 	
