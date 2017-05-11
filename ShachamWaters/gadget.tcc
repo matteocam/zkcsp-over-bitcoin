@@ -38,21 +38,24 @@ void fair_auditing_gadget<ppT>::generate_r1cs_constraints()
 	check_y->generate_r1cs_constraints();	
 	check_g->generate_r1cs_constraints();
 	
+	// Innocent
 	for (auto b : alleged_digest) {
 		generate_boolean_r1cs_constraint<FieldT>(this->pb, b, "enforcement bitness alleged_digest ");
 	}
 	
+	
 	check_sigma->generate_r1cs_constraints();
 	
-	for (auto r_i : r) {
+	for (auto r_i : r) { //  Innocent
 		generate_boolean_r1cs_constraint<FieldT>(this->pb, r_i, "enforcement bitness r");
 	}
 	
-	pairing_check->generate_r1cs_constraints();
-	selector->generate_r1cs_constraints();
+	
+	pairing_check->generate_r1cs_constraints(); //  Innocent
+	selector->generate_r1cs_constraints(); // Innocent
 	
 	// check that alleged digest and the selector's output are the same
-	for (auto i = 0; i < digest_size; i++) {
+	for (auto i = 0; i < digest_size; i++) { // Innocent
 		this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(alleged_digest[i], 1, selector->selected_digest[i]), "alleged_diges == selected_digest");
 	}
 	
@@ -73,6 +76,13 @@ void fair_auditing_gadget<ppT>::generate_r1cs_witness(
 	alleged_digest.fill_with_bits(this->pb, alleged_digest_val);
 	
 	sigma->generate_r1cs_witness(sigma_val);
+	
+	check_M->generate_r1cs_witness();
+	check_y->generate_r1cs_witness();
+	check_g->generate_r1cs_witness();
+	check_sigma->generate_r1cs_witness();
+	
+	
 	r.fill_with_bits(this->pb, r_val);
 	
 	pairing_check->generate_r1cs_witness();
