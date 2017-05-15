@@ -5,6 +5,11 @@
 
 #include "YaoSEParty.h"
 
+#include <string>
+#include <vector>
+#include <iomanip>
+using namespace std;
+
 CircuitFile *cf;
 void compute(Bit * res, Bit * in, Bit * in2) {
     cf->compute((block*)res, (block*)in, (block*)in2);
@@ -84,6 +89,33 @@ void YaoSEParty::runOnline(){
     }
 }
 
+string convert2hex(vector<byte> in)
+{
+	stringstream sstream;
+	string str_res = "";
+	assert (in.size() % 4 == 0);
+	for (auto i = 0; i < in.size(); i+=4) {
+		// Build value
+		unsigned hexVal = 0;
+		for (auto j = 0; j < 4; j++) {
+			hexVal += (in[i+j] << 4-j-1);
+		}
+		//cout << hexVal << "-";
+		
+		char res;
+		if (hexVal < 10) 
+			res = '0'+hexVal;
+		else // hexVal \in {10,...,15}
+			res = ('A'+hexVal-10);
+		// Aggregate value
+		//sstream << hex << hexVal;
+		str_res += res;
+	}
+	//cout << endl;
+	//return sstream.str();
+	return str_res;
+}
+
 int binaryTodecimal(int n){
 
     int output = 0;
@@ -106,11 +138,11 @@ int binaryTodecimal(int n){
 
 int main(int argc, char* argv[]) {
 
-    CircuitConverter::convertScapiToBristol(argv[2], "emp_format_circuit.txt", false);
+    //CircuitConverter::convertScapiToBristol(argv[2], "emp_format_circuit.txt", false);
 
     int id = atoi(argv[1]);
     // argv[1] is id, argv[2] is NigelAes.txt argv[3] is ip, argv[4] is port, argv[5] is inputFile
-    YaoSEParty party(id, "emp_format_circuit.txt", argv[3], atoi(argv[4]), argv[5]);
+    YaoSEParty party(id, argv[2], argv[3], atoi(argv[4]), argv[5]);
 
     int runs = 20;
     int time = 0;
@@ -162,10 +194,13 @@ int main(int argc, char* argv[]) {
     if (id == 2) {
         auto out = party.getOutput();
         cout << "result: " << endl;
-        for (int i = 0; i < cf->n3; i++) {
-            cout << (int)out[i] << " ";
-        }
-        cout << endl;
+        // print in hex
+        auto hexOut = convert2hex(out);
+        cout << hexOut << endl;
+        //for (int i = 0; i < cf->n3; i++) {
+        //    cout << hexOut[i] << " ";
+        //}
+        //cout << endl;
     }
 }
 #endif

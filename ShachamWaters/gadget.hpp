@@ -10,6 +10,7 @@
 #include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
 
 const int digest_size = 256;
+bool sha256_padding[256] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0};
 
 template<typename ppT>
 class output_selector_gadget;
@@ -55,33 +56,11 @@ public:
 														 const bit_vector &r_val);
 	
 	unsigned num_input_variables() const {
-		return M->num_variables() + y->num_variables() + g->num_variables() + digest_size /* r */ + digest_size /* alleged_digest */ ;
+		return M->num_variables() + y->num_variables() + g->num_variables() + digest_size /* alleged_digest */ ;
 	}
                                
 };
 
-template<typename ppT>
-class my_add_G1_gadget : public gadget<Fr<ppT>> {
-public:
-	typedef Fr<ppT> FieldT;
-	
-	std::shared_ptr<G1_variable<ppT> > a, b, c;
-	std::shared_ptr<G1_checker_gadget<ppT> > check_a, check_b, check_c;
-	std::shared_ptr<G1_add_gadget<ppT> > compute_add;
-	
-	my_add_G1_gadget(protoboard<FieldT> &pb);
-	void generate_r1cs_constraints();
-    
-	void generate_r1cs_witness(const G1<other_curve<ppT> > &A,
-														 const G1<other_curve<ppT> > &B,
-														 const G1<other_curve<ppT> > &C);
-														 
-		unsigned num_input_variables()
-	{
-		return a->num_variables() + b->num_variables();
-	}
-                               
-};
 
 template<typename ppT>
 class output_selector_gadget : public gadget<Fr<ppT>> {

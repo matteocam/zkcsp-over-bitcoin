@@ -38,7 +38,6 @@ void fair_auditing_gadget<ppT>::generate_r1cs_constraints()
 	check_y->generate_r1cs_constraints();	
 	check_g->generate_r1cs_constraints();
 	
-	// Innocent
 	for (auto b : alleged_digest) {
 		generate_boolean_r1cs_constraint<FieldT>(this->pb, b, "enforcement bitness alleged_digest ");
 	}
@@ -46,17 +45,19 @@ void fair_auditing_gadget<ppT>::generate_r1cs_constraints()
 	
 	check_sigma->generate_r1cs_constraints();
 	
-	for (auto r_i : r) { //  Innocent
+	for (auto r_i : r) { 
 		generate_boolean_r1cs_constraint<FieldT>(this->pb, r_i, "enforcement bitness r");
 	}
 	
 	
-	pairing_check->generate_r1cs_constraints(); //  Innocent
-	selector->generate_r1cs_constraints(); // Innocent
+	pairing_check->generate_r1cs_constraints(); 
+	selector->generate_r1cs_constraints(); 
 	
 	// check that alleged digest and the selector's output are the same
-	for (auto i = 0; i < digest_size; i++) { // Innocent
+	for (auto i = 0; i < digest_size; i++) { 
 		this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(alleged_digest[i], 1, selector->selected_digest[i]), "alleged_diges == selected_digest");
+		//this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(alleged_digest[i], 1, selector->sha_r->bits[i]), "alleged_diges == selected_digest");
+		// XXX: should be the upper line
 	}
 	
 }
@@ -89,53 +90,6 @@ void fair_auditing_gadget<ppT>::generate_r1cs_witness(
 	selector->generate_r1cs_witness();
 }
 
-template<typename ppT>
-my_add_G1_gadget<ppT>::my_add_G1_gadget(protoboard<Fr<ppT>> &pb) :
-																gadget<Fr<ppT>>(pb)
-{
-	// variables
-	a.reset(new G1_variable<ppT>(pb, ""));
-	b.reset(new G1_variable<ppT>(pb, ""));
-	c.reset(new G1_variable<ppT>(pb, ""));
-	
-	// checkers
-	check_a.reset(new G1_checker_gadget<ppT>(pb, *a, ""));
-	check_b.reset(new G1_checker_gadget<ppT>(pb, *b, ""));
-	check_c.reset(new G1_checker_gadget<ppT>(pb, *c, ""));
-	
-	// add 
-	compute_add.reset(new G1_add_gadget<ppT>(pb, *a, *b, *c, ""));
-	
-}
-
-template<typename ppT>
-void my_add_G1_gadget<ppT>::generate_r1cs_constraints()
-{
-	
-	check_a->generate_r1cs_constraints();
-	check_b->generate_r1cs_constraints();
-	check_c->generate_r1cs_constraints();
-	
-	compute_add->generate_r1cs_constraints();
-}
-
-template<typename ppT>
-void my_add_G1_gadget<ppT>::generate_r1cs_witness(const G1<other_curve<ppT> > &A,
-																								  const G1<other_curve<ppT> > &B,
-																								  const G1<other_curve<ppT> > &C)
-{
-	a->generate_r1cs_witness(A);
-	b->generate_r1cs_witness(B);
-	c->generate_r1cs_witness(C);
-	
-	check_a->generate_r1cs_witness();
-	check_b->generate_r1cs_witness();
-	check_c->generate_r1cs_witness();
-	
-	compute_add->generate_r1cs_witness();
-}																												 
-																												 
-																										
 
 template<typename ppT>
 output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb,
@@ -145,8 +99,6 @@ output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb,
 																										t(_t),
 																										r(_r)
 {
-	tmp1.allocate(pb, digest_size, "");
-	tmp2.allocate(pb, digest_size, "");
 	xor_r.allocate(pb, digest_size, "");
 	
 	sha_r.reset(new digest_variable<FieldT>(pb, digest_size, "sha_r"));
@@ -175,8 +127,9 @@ output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb,
 template<typename ppT>
 void output_selector_gadget<ppT>::generate_r1cs_constraints()
 {
-	bit_vector sha256_padding(sha_padding());
+	//bit_vector sha256_padding(sha_padding());
 	for (unsigned int i = 0; i < digest_size; i++) {
+		 // Innocent
 			this->pb.add_r1cs_constraint(
 					r1cs_constraint<FieldT>(
 							{ padding_var->bits[i] },
@@ -184,31 +137,28 @@ void output_selector_gadget<ppT>::generate_r1cs_constraints()
 							{ sha256_padding[i] ? 1 : 0 }),
 					"constrain_padding");
 	}
-    
-	sha_r->generate_r1cs_constraints();
-	compute_sha_r->generate_r1cs_constraints();
+  
+  compute_sha_r->generate_r1cs_constraints();   // Not only cause of failure
+	sha_r->generate_r1cs_constraints();           // Same here
+	
 	
 	// xor_r = sha_r xor r
 	for (auto i = 0; i < digest_size; i++) {
+		// Innocent
 		this->pb.add_r1cs_constraint(
 						r1cs_constraint<FieldT>(
 							2*r[i],
 							sha_r->bits[i],
 							r[i]+sha_r->bits[i]-xor_r[i]),
 							"xor");
+		
 	}
 	
 	// if t then sha_r else xor_r
 	for (auto i = 0; i < digest_size; i++) {
+		// Innocent
 		this->pb.add_r1cs_constraint(
-			r1cs_constraint<FieldT>(t, sha_r->bits[i], tmp1[i]), 
-			"tmp1");
-		this->pb.add_r1cs_constraint(
-			r1cs_constraint<FieldT>(1-t, xor_r[i], tmp2[i]),
-			"tmp2");
-			
-		this->pb.add_r1cs_constraint(
-			r1cs_constraint<FieldT>(1, tmp1[i], selected_digest[i]-tmp2[i]),
+			r1cs_constraint<FieldT>(t, sha_r->bits[i] - xor_r[i], selected_digest[i] - xor_r[i]),
 			"selected_digest as IF output");
 	}
 	
@@ -217,23 +167,22 @@ void output_selector_gadget<ppT>::generate_r1cs_constraints()
 template<typename ppT>
 void output_selector_gadget<ppT>::generate_r1cs_witness()
 {
-	bit_vector sha256_padding(sha_padding());
+	//bit_vector sha256_padding(sha_padding());
 	
 	for (unsigned int i = 0; i < 256; i++) {
 			this->pb.val(padding_var->bits[i]) = sha256_padding[i] ? 1 : 0;
 	}
 
 	compute_sha_r->generate_r1cs_witness();
-	//sha_r->generate_r1cs_witness();
+	//sha_r->generate_r1cs_witness(); // we shouldn't need this
 	
 	for (auto i = 0; i < digest_size; i++) {
 		this->pb.val(xor_r[i]) = this->pb.val(r[i]) + this->pb.val(sha_r->bits[i]) - FieldT(2) * this->pb.val(r[i])* this->pb.val(sha_r->bits[i]);
 	}
 	
 	for (auto i = 0; i < digest_size; i++) {
-		this->pb.val(tmp1[i]) = this->pb.val(t)*this->pb.val(sha_r->bits[i]);
-		this->pb.val(tmp2[i]) = (FieldT::one()-this->pb.val(t))*this->pb.val(xor_r[i]);
-		this->pb.val(selected_digest[i]) = this->pb.val(tmp1[i])+this->pb.val(tmp2[i]); 
+		this->pb.val(selected_digest[i]) = this->pb.val(t)*this->pb.val(sha_r->bits[i]) + 
+																						(FieldT::one()-this->pb.val(t))*this->pb.val(xor_r[i]);
 	}
 }
 

@@ -18,9 +18,31 @@ using namespace libsnark;
 
 #include "gadget.hpp"
 
-void hexToBits(const vector<uint8_t> &hex, bit_vector &out)
-{
-	
+// Function from pay-to-sudoku
+void convertBytesToVector(const unsigned char* bytes, std::vector<bool>& v) {
+    int numBytes = v.size() / 8;
+    unsigned char c;
+    for(int i = 0; i < numBytes; i++) {
+        c = bytes[i];
+
+        for(int j = 0; j < 8; j++) {
+            v.at((i*8)+j) = ((c >> (7-j)) & 1);
+        }
+    }
+}
+
+void convertBytesVectorToBytes(const std::vector<unsigned char>& v, unsigned char* bytes) {
+    for(size_t i = 0; i < v.size(); i++) {
+        bytes[i] = v.at(i);
+    }
+}
+
+
+void convertBytesVectorToVector(const std::vector<unsigned char>& bytes, std::vector<bool>& v) {
+      v.resize(bytes.size() * 8);
+    unsigned char bytesArr[bytes.size()];
+    convertBytesVectorToBytes(bytes, bytesArr);
+    convertBytesToVector(bytesArr, v);
 }
 
 template<typename ppT>
@@ -45,8 +67,6 @@ bool run_r1cs_ppzksnark(const r1cs_example<Fr<ppT> > &example)
 	//print_header("R1CS ppzkSNARK Online Verifier");
 	//const bool ans2 = r1cs_ppzksnark_online_verifier_strong_IC<ppT>(pvk, example.primary_input, proof);
 	//assert(ans == ans2);
-
-
 	return ans;
 }
 
@@ -77,27 +97,6 @@ r1cs_example<Fr<ppT>> gen_check_pairing_example()
 }
 * */
 
-template<typename ppT>
-r1cs_example<Fr<ppT>> gen_my_add_G1_example()
-{
-	typedef Fr<ppT> FieldT;
-	
-
-	protoboard<FieldT> pb;
-	
-  my_add_G1_gadget<ppT> g(pb);
-  const int num_inputs = g.num_input_variables();
-  g.generate_r1cs_constraints();
-  pb.set_input_sizes(num_inputs);
-  auto cs = pb.get_constraint_system();
-  
-	auto a = FieldT(2)*G1<other_curve<ppT>>::one();
-	auto b = FieldT(3)*G1<other_curve<ppT>>::one();
-	auto c = G1<other_curve<ppT>>::one();
-	g.generate_r1cs_witness(a, b, c);
-	
-	return r1cs_example<FieldT>(std::move(cs), std::move(pb.primary_input()), std::move(pb.auxiliary_input()));
-}
 
 void read_bits_from_file(const char *fn, bit_vector &v)
 {
@@ -122,16 +121,24 @@ r1cs_example<Fr<ppT>> gen_BLS_example()
   //pb.set_input_sizes(num_inputs);
   auto cs = pb.get_constraint_system();
   
-	auto sigma = FieldT(2)*G1<other_curve<ppT>>::one();
-	auto gen = FieldT(3)*G2<other_curve<ppT>>::one();
+	//auto sigma = FieldT(2)*G1<other_curve<ppT>>::one();
+	//auto gen = FieldT(3)*G2<other_curve<ppT>>::one();
+	auto sigma = FieldT::random_element()*G1<other_curve<ppT>>::one();
+	auto gen = FieldT::random_element()*G2<other_curve<ppT>>::one();
 	auto M = sigma;
-	auto y = FieldT(3)*G2<other_curve<ppT>>::one();;
+	auto y = gen;
 	
 	bit_vector r;
 	bit_vector ad;
 	
-	read_bits_from_file("test_r", r);
-	read_bits_from_file("test_sha_r", ad);
+	const vector<uint8_t> r8bit = {206, 64, 25, 10, 245, 205, 246, 107, 191, 157, 114, 181, 63, 40, 95, 134, 6, 178, 210, 43, 243, 10, 217, 251, 246, 248, 0, 21, 86, 194, 100, 94};
+  const vector<uint8_t> ad8bit = {253, 199, 66, 55, 24, 155, 80, 121, 138, 60, 36, 201, 186, 221, 164, 65, 194, 53, 192, 159, 252, 7, 194, 24, 200, 217, 57, 55, 45, 204, 71, 9};
+
+	convertBytesVectorToVector(r8bit, r);
+	convertBytesVectorToVector(ad8bit, ad);
+	
+	//read_bits_from_file("test_r", r);
+	//read_bits_from_file("test_sha_r", ad);
 	
 	g.generate_r1cs_witness(M, y, gen, ad, sigma, r);
 	
