@@ -2,6 +2,7 @@
 #include <sstream>
 #include <fstream>
 #include <type_traits>
+#include <chrono>
 using namespace std;
 
 
@@ -17,6 +18,22 @@ using namespace std;
 using namespace libsnark;
 
 #include "gadget.hpp"
+
+// Timer utility functions
+
+chrono::high_resolution_clock::time_point my_start, my_end;
+
+void my_timer_start()
+{
+	my_start = chrono::high_resolution_clock::now();
+}
+
+int my_timer_end()
+{
+	my_end = chrono::high_resolution_clock::now();
+  return std::chrono::duration_cast<std::chrono::milliseconds>(my_end - my_start).count();
+}
+
 
 // Function from pay-to-sudoku
 void convertBytesToVector(const unsigned char* bytes, std::vector<bool>& v) {
@@ -52,8 +69,8 @@ bool run_r1cs_ppzksnark(const r1cs_example<Fr<ppT> > &example)
 	r1cs_ppzksnark_keypair<ppT> keypair = r1cs_ppzksnark_generator<ppT>(example.constraint_system);
 	//printf("\n"); print_indent(); print_mem("after generator");
 
-	print_header("Preprocess verification key");
-	r1cs_ppzksnark_processed_verification_key<ppT> pvk = r1cs_ppzksnark_verifier_process_vk<ppT>(keypair.vk);
+	//print_header("Preprocess verification key");
+	//r1cs_ppzksnark_processed_verification_key<ppT> pvk = r1cs_ppzksnark_verifier_process_vk<ppT>(keypair.vk);
 
 	print_header("R1CS ppzkSNARK Prover");
 	r1cs_ppzksnark_proof<ppT> proof = r1cs_ppzksnark_prover<ppT>(keypair.pk, example.primary_input, example.auxiliary_input);
@@ -69,33 +86,6 @@ bool run_r1cs_ppzksnark(const r1cs_example<Fr<ppT> > &example)
 	//assert(ans == ans2);
 	return ans;
 }
-
-/*
-
-template<typename ppT>
-r1cs_example<Fr<ppT>> gen_check_pairing_example()
-{
-	typedef Fr<ppT> FieldT;
-	
-
-	protoboard<FieldT> pb;
-	
-  check_pairing_eq_gadget<ppT> g(pb);
-  const int num_inputs = g.num_input_variables();
-  g.generate_r1cs_constraints();
-  pb.set_input_sizes(num_inputs);
-  auto cs = pb.get_constraint_system();
-  
-	
-	auto one = FieldT::one();
-	auto a = FieldT(2)*G1<other_curve<ppT>>::one();
-	auto b = FieldT(3)*G2<other_curve<ppT>>::one();
-	auto c = FieldT(2)*G2<other_curve<ppT>>::one();
-	g.generate_r1cs_witness(a, b, a, c);
-	
-	return r1cs_example<FieldT>(std::move(cs), std::move(pb.primary_input()), std::move(pb.auxiliary_input()));
-}
-* */
 
 
 void read_bits_from_file(const char *fn, bit_vector &v)
@@ -170,23 +160,63 @@ r1cs_example<Fr<ppT>> gen_output_selector_example()
 	return r1cs_example<FieldT>(std::move(cs), std::move(pb.primary_input()), std::move(pb.auxiliary_input()));
 }
 
-
-
-int main(int argc, char **argv)
+void single_test()
 {
 	init_mnt4_params();
 	default_r1cs_ppzksnark_pp::init_public_params();
 	
 	r1cs_example<Fr<default_r1cs_ppzksnark_pp> > example = 
 		gen_BLS_example<default_r1cs_ppzksnark_pp >(); 
-		//gen_output_selector_example<default_r1cs_ppzksnark_pp>(); 
-		//gen_check_pairing_example<default_r1cs_ppzksnark_pp >(); 
-		//gen_my_add_G1_example<default_r1cs_ppzksnark_pp >(); 
-		//generate_r1cs_example_with_binary_input<Fr<default_r1cs_ppzksnark_pp> >(20, 10);
+
 	
 	bool it_works = run_r1cs_ppzksnark<default_r1cs_ppzksnark_pp>(example);
 	cout << endl;
 	cout << (it_works ? "It works!" : "It failed.") << endl;
+}
+
+void benchmark(int numReps)
+{
+	
+	init_mnt4_params();
+	default_r1cs_ppzksnark_pp::init_public_params();
+	
+	typedef default_r1cs_ppzksnark_pp ppT;
+	
+	r1cs_example<Fr<default_r1cs_ppzksnark_pp> > example = 
+		gen_BLS_example<default_r1cs_ppzksnark_pp >();
+	
+	int keygen_t, prov_t, ver_t;
+	keygen_t = prov_t = ver_t = 0;
+		
+	for (auto i = 1; i <= numReps; i++) {
+		// Key generation
+		my_timer_start();
+		r1cs_ppzksnark_keypair<ppT> keypair = r1cs_ppzksnark_generator<ppT>(example.constraint_system);
+		keygen_t += my_timer_end();
+		
+		// Proof
+		my_timer_start();
+		r1cs_ppzksnark_proof<ppT> proof = r1cs_ppzksnark_prover<ppT>(keypair.pk, example.primary_input, example.auxiliary_input);
+		prov_t += my_timer_end();
+		
+		// Verification
+		my_timer_start();
+		r1cs_ppzksnark_verifier_strong_IC<ppT>(keypair.vk, example.primary_input, proof);
+		ver_t += my_timer_end();
+	}
+	
+	cout << "Avg Keygen Time: " << keygen_t/numReps << " millis" << endl;
+	cout << "Avg Proving Time: " << prov_t/numReps << " millis" << endl;
+	cout << "Avg Verification Time: " << ver_t/numReps << " millis" << endl;
+}
+
+
+int main(int argc, char **argv)
+{
+	// single_test();
+	
+	benchmark(100);
+	
 	return 0;
 	
 }

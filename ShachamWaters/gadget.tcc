@@ -129,7 +129,7 @@ void output_selector_gadget<ppT>::generate_r1cs_constraints()
 {
 	//bit_vector sha256_padding(sha_padding());
 	for (unsigned int i = 0; i < digest_size; i++) {
-		 // Innocent
+		 
 			this->pb.add_r1cs_constraint(
 					r1cs_constraint<FieldT>(
 							{ padding_var->bits[i] },
@@ -138,13 +138,13 @@ void output_selector_gadget<ppT>::generate_r1cs_constraints()
 					"constrain_padding");
 	}
   
-  compute_sha_r->generate_r1cs_constraints();   // Not only cause of failure
-	sha_r->generate_r1cs_constraints();           // Same here
+  compute_sha_r->generate_r1cs_constraints();  
+	sha_r->generate_r1cs_constraints();           
 	
 	
 	// xor_r = sha_r xor r
 	for (auto i = 0; i < digest_size; i++) {
-		// Innocent
+
 		this->pb.add_r1cs_constraint(
 						r1cs_constraint<FieldT>(
 							2*r[i],
@@ -156,7 +156,7 @@ void output_selector_gadget<ppT>::generate_r1cs_constraints()
 	
 	// if t then sha_r else xor_r
 	for (auto i = 0; i < digest_size; i++) {
-		// Innocent
+
 		this->pb.add_r1cs_constraint(
 			r1cs_constraint<FieldT>(t, sha_r->bits[i] - xor_r[i], selected_digest[i] - xor_r[i]),
 			"selected_digest as IF output");
