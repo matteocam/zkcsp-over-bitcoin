@@ -132,6 +132,8 @@ r1cs_example<Fr<ppT>> gen_BLS_example()
 	
 	g.generate_r1cs_witness(M, y, gen, ad, sigma, r);
 	
+	cout << "Num constraints " << cs.num_constraints() << endl;
+	
 	return r1cs_example<FieldT>(std::move(cs), std::move(pb.primary_input()), std::move(pb.auxiliary_input()));
 }
 
@@ -215,7 +217,7 @@ int main(int argc, char **argv)
 {
 	// single_test();
 	
-	benchmark(100);
+	benchmark(1);
 	
 	return 0;
 	

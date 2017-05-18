@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
     // argv[1] is id, argv[2] is NigelAes.txt argv[3] is ip, argv[4] is port, argv[5] is inputFile
     YaoSEParty party(id, argv[2], argv[3], atoi(argv[4]), argv[5]);
 
-    int runs = 20;
+    int runs = atoi(argv[6]);
     int time = 0;
     chrono::high_resolution_clock::time_point start, end;
 
@@ -164,6 +164,7 @@ int main(int argc, char* argv[]) {
         }
         cout << endl;
     }
+    cout << "Bytes sent: " << party.getBytesSent()/runs << endl;
 
 
     int offlineTime = 0, onlineTime = 0, loadTime = 0;
@@ -191,6 +192,7 @@ int main(int argc, char* argv[]) {
     cout<<"running offline "<<runs<<" times took in average "<<offlineTime/runs << " millis"<<endl;
     cout<<" load "<<runs<<" times took in average "<<loadTime/runs << " millis"<<endl;
     cout<<"running online "<<runs<<" times took in average "<<onlineTime/runs << " millis"<<endl;
+    cout << "Bytes sent: " << party.getBytesSent() << endl;
     if (id == 2) {
         auto out = party.getOutput();
         cout << "result: " << endl;

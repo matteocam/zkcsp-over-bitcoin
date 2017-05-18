@@ -5,6 +5,8 @@
 #ifndef LIBSCAPI_YAOSEPARTY_H
 #define LIBSCAPI_YAOSEPARTY_H
 
+#define COUNT_IO
+
 #include <libscapi/include/CryptoInfra/Protocol.hpp>
 #include <libscapi/include/CryptoInfra/SecurityLevel.hpp>
 #include <libscapi/include/infra/CircuitConverter.hpp>
@@ -98,6 +100,10 @@ public:
         }
         return output;
     }
+    
+    uint64_t getBytesSent() const {
+			return io->counter;
+		}
 
 };
 
