@@ -3,8 +3,8 @@
 
 ## Dependencies:
 
-* libsnark
-* libscapi
+* [libsnark](https://github.com/scipr-lab/libsnark/)
+* [libscapi](https://github.com/cryptobiu/libscapi/)
 
 
 ## Additional steps after building libscapi: 
