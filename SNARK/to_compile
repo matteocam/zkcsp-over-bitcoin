@@ -1,1 +1,0 @@
-g++ -o main -std=c++11 -I/usr/include/libsnark -lsnark -lgmp -DUSE_ASM -DCURVE_ALT_BN128 main.cpp
