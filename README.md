@@ -1,6 +1,11 @@
 # Fair Auditing Library for Bitcoin
 
 
+## Dependencies:
+
+* libsnark
+* libscapi
+
 
 ## Additional steps after building libscapi: 
 This is mostly a dirty way to make all work. It is recommended that you have the boost directory and the libscapi directory in your home folder. It is not necessary but this will enable you to build without having to edit any text file.
@@ -9,7 +14,7 @@ This is mostly a dirty way to make all work. It is recommended that you have the
 * `sudo cp -rv libscapi/install/lib/* /usr/lib`
 * `sudo cp -rv libscapi/include/* /usr/include`
 
-For YaoSingleExecution:
+## Additional steps for libscapi:
 
 * `sudo mkdir -p /usr/include/libscapi/include` 
 * `sudo cp -rv libscapi/include/* /usr/include/libscapi/include/`
