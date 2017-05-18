@@ -13,9 +13,6 @@ This is mostly a dirty way to make all work. It is recommended that you have the
 * `sudo make install` - from withing the directory boost_1_60_0/
 * `sudo cp -rv libscapi/install/lib/* /usr/lib`
 * `sudo cp -rv libscapi/include/* /usr/include`
-
-## Additional steps for libscapi:
-
 * `sudo mkdir -p /usr/include/libscapi/include` 
 * `sudo cp -rv libscapi/include/* /usr/include/libscapi/include/`
 * `sudo mkdir -p /usr/include/libscapi/lib/EMP/emp-m2pc/malicious/`
