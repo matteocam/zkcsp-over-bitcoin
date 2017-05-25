@@ -21,24 +21,37 @@ This is mostly a dirty way to make all work. It is recommended that you have the
 
 ## Content
 
+This repository contains two implementations of the ZKCSP protocol in ***(PAPER LINK HERE)*** for Proofs of Retrievability (PoR):
 
-The 2PC  a wrapper for the Yao protocol in the Single-Execution setting.
+* An implementation based on SNARKs for publicly verifiable PoR (folder SNARK/);
+* An implementation based on Secure Two Party Computation for privately verifiable PoR (folder Yao/ contains the code for running the Secure Protocols).
+
+### A note on the implementation of Secure Two Party Computation
+The folder Yao contains a wrapper Yao protocol in the Single-Execution setting part of LIBSCAPI (see Yao/LICENSE-SCAPI).
 The wrapped protocol was implemented by EMP (Efficient Multi-Party computation toolkit, and the implementation can be
 found at https://github.com/emp-toolkit/emp-m2pc.
 The protocol is based on the https://eprint.iacr.org/2016/762.pdf paper.
 
 
-INSTALLATION AND EXECUTION
---------------------------
+## Building and Running
 
-1. Go in the YaoSingleExecution directory.
-2. Run the make command
-3. To run the program type
-~ ./YaoSingleExecution [party_id] [circuit_file_name] [ip_address] [port_number] [input_file_name]
-for example, in order to run p1 with aes circuit on local host and port 12345 type:
-~ ./YaoSingleExecution 1 NigelAes.txt 127.0.0.1 12345 AesInputs2.txt
+### Publicly Verifiable PoR
 
-The output is printed to the screen in p2 side.
+### Privately Verifiable PoR
+
+```
+cd Yao
+cmake
+make
+./YaoSingleExecution [party_id] [circuit_file_name] [ip_address] [port_number] [input_file_name] [num_iterations]
+```
+
+For example you can run (in two different terminals):
+```
+./YaoSingleExecution 1 CircuitInputs/ourFunctionFinal.txt 127.0.0.1 12345 CircuitInputs/input-mac-p1.txt 100
+./YaoSingleExecution 2 CircuitInputs/ourFunctionFinal.txt 127.0.0.1 12345 CircuitInputs/input-mac-p2.txt 100
+```
+
 
 
 
