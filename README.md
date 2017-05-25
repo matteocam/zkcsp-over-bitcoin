@@ -1,5 +1,19 @@
 # Zero Knowledge Contingent Service Payments (ZKCSP) over Bitcoin
 
+## Content
+
+This repository contains two implementations of the ZKCSP protocol in ***(PAPER LINK HERE)*** for Proofs of Retrievability (PoR):
+
+* An implementation based on SNARKs for publicly verifiable PoR (folder SNARK/);
+* An implementation based on Secure Two Party Computation for privately verifiable PoR (folder Yao/ contains the code for running the Secure Protocols).
+
+### A note on the implementation of Secure Two Party Computation
+The folder Yao contains a wrapper Yao protocol in the Single-Execution setting part of LIBSCAPI (see Yao/LICENSE-SCAPI).
+The wrapped protocol was implemented by EMP (Efficient Multi-Party computation toolkit, and the implementation can be
+found at https://github.com/emp-toolkit/emp-m2pc.
+The protocol is based on the https://eprint.iacr.org/2016/762.pdf paper.
+
+
 
 ## Dependencies:
 
@@ -18,19 +32,6 @@ This is mostly a dirty way to make all work. It is recommended that you have the
 * `sudo mkdir -p /usr/include/libscapi/lib/EMP/emp-m2pc/malicious/`
 * `sudo cp -v libscapi/lib/EMP/emp-m2pc/malicious/malicious.h /usr/include/libscapi/lib/EMP/emp-m2pc/malicious/`
 * Install cmake version 3.5 or higher
-
-## Content
-
-This repository contains two implementations of the ZKCSP protocol in ***(PAPER LINK HERE)*** for Proofs of Retrievability (PoR):
-
-* An implementation based on SNARKs for publicly verifiable PoR (folder SNARK/);
-* An implementation based on Secure Two Party Computation for privately verifiable PoR (folder Yao/ contains the code for running the Secure Protocols).
-
-### A note on the implementation of Secure Two Party Computation
-The folder Yao contains a wrapper Yao protocol in the Single-Execution setting part of LIBSCAPI (see Yao/LICENSE-SCAPI).
-The wrapped protocol was implemented by EMP (Efficient Multi-Party computation toolkit, and the implementation can be
-found at https://github.com/emp-toolkit/emp-m2pc.
-The protocol is based on the https://eprint.iacr.org/2016/762.pdf paper.
 
 
 ## Building and Running
