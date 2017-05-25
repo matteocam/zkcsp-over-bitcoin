@@ -1,4 +1,4 @@
-# Zero Knowledge Contingent Service Payments over Bitcoin
+# Zero Knowledge Contingent Service Payments (ZKCSP) over Bitcoin
 
 
 ## Dependencies:
@@ -7,7 +7,7 @@
 * [libscapi](https://github.com/cryptobiu/libscapi/)
 
 
-## Additional steps after building libscapi: 
+### Additional steps after building libscapi: 
 This is mostly a dirty way to make all work. It is recommended that you have the boost directory and the libscapi directory in your home folder. It is not necessary but this will enable you to build without having to edit any text file.
 
 * `sudo make install` - from withing the directory boost_1_60_0/
@@ -36,6 +36,12 @@ The protocol is based on the https://eprint.iacr.org/2016/762.pdf paper.
 ## Building and Running
 
 ### Publicly Verifiable PoR
+```
+cd SNARK
+make
+./main
+
+```
 
 ### Privately Verifiable PoR
 
