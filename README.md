@@ -1,4 +1,4 @@
-# Fair Auditing Library for Bitcoin
+# Zero Knowledge Contingent Service Payments over Bitcoin
 
 
 ## Dependencies:
