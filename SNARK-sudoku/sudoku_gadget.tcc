@@ -1,10 +1,73 @@
+
+template<typename FieldT>
+void mydisjunction_gadget<FieldT>::generate_r1cs_constraints()
+{	
+    /* inv * sum = output */
+    linear_combination<FieldT> a1, b1, c1;
+    a1.add_term(inv);
+    for (size_t i = 0; i < inputs.size(); ++i)
+    {
+        b1.add_term(inputs[i]);
+    }
+    c1.add_term(output);
+
+    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(a1, b1, c1), FMT(this->annotation_prefix, " inv*sum=output"));
+
+    /* (1-output) * sum = 0 */
+    linear_combination<FieldT> a2, b2, c2;
+    a2.add_term(ONE);
+    a2.add_term(output, -1);
+    for (size_t i = 0; i < inputs.size(); ++i)
+    {
+        b2.add_term(inputs[i]);
+    }
+    c2.add_term(ONE, 0);
+
+    this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(a2, b2, c2), FMT(this->annotation_prefix, " (1-output)*sum=0"));
+}
+
+template<typename FieldT>
+void mydisjunction_gadget<FieldT>::generate_r1cs_witness()
+{
+	/*
+		for (size_t i = 0; i < inputs.size(); ++i)
+    {
+       if ( this->pb.val(inputs[i]) != FieldT::zero() ) {
+				 this->pb.val(output) = FieldT::one();
+				 return;
+			 }
+    }
+    this->pb.val(output) = FieldT::zero();
+*/
+	
+    FieldT sum = FieldT::zero();
+
+    for (size_t i = 0; i < inputs.size(); ++i)
+    {
+        sum += this->pb.val(inputs[i]);
+    }
+
+    if (sum.is_zero())
+    {
+        this->pb.val(inv) = FieldT::zero();
+        this->pb.val(output) = FieldT::zero();
+    }
+    else
+    {
+        this->pb.val(inv) = sum.inverse();
+        this->pb.val(output) = FieldT::one();
+    }
+    
+}
+
+
 template<typename FieldT>
 test_Maxwell<FieldT>::test_Maxwell(constraint_vars_protoboard<FieldT> &pb, unsigned int n, const pb_variable<FieldT> &output) :
-	gadget<FieldT>(pb, ""), output(output), c_pb(pb)
+	gadget<FieldT>(pb, "test_Maxwell"), output(output), c_pb(pb)
 {
-		sudoku.reset(new sudoku_gadget<FieldT>(pb, n, true)); // Should be false
+		sudoku.reset(new sudoku_gadget<FieldT>(pb, n, false)); // Should be false
 		
-		disjunction_out.allocate(pb, "");
+		disjunction_out.allocate(pb, "disjunction_out");
 }
 
 		
@@ -12,14 +75,14 @@ template<typename FieldT>
 void test_Maxwell<FieldT>::generate_r1cs_constraints()
 {
 	sudoku->generate_r1cs_constraints();
-	c_pb.mk_constraints_vars(cs_vars);
+	c_pb.mk_constraints_vars(cs_vars_aux, cs_vars);
 	
 	// must be created here because cs_vars are allocated only after mk_constraints_vars
-	disjunction.reset(new disjunction_gadget<FieldT>(c_pb, cs_vars, disjunction_out, ""));
+	disjunction.reset(new mydisjunction_gadget<FieldT>(c_pb, cs_vars, disjunction_out, "disjunction_gadget"));
 	
 	disjunction->generate_r1cs_constraints();
 	// output is 1-disjunction_out
-	c_pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, 1-disjunction_out, output), "");
+	c_pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, 1-disjunction_out, output), "opposite of disj");
 }
 
 template<typename FieldT>
@@ -31,13 +94,16 @@ void test_Maxwell<FieldT>::generate_r1cs_witness(std::vector<bit_vector> &puzzle
 {
 	sudoku->generate_r1cs_witness(puzzle_values, input_solution_values, input_seed_key, 
 																hash_of_input_seed_key, input_encrypted_solution);
-	c_pb.mk_witnesses(cs_vars);
+	c_pb.mk_witnesses(cs_vars_aux, cs_vars);
 	disjunction->generate_r1cs_witness();
 	
 	if (c_pb.val(disjunction_out) == FieldT::zero()) {
 		c_pb.val(output) = FieldT::one();
+		//printf("### All constraints in Sudoku satisfied ###\n");
 	} else {
 		c_pb.val(output) = FieldT::zero();
+		//printf("### Some constraints in Sudoku dissatisfied ###\n");
+
 	}
 }
 
@@ -209,7 +275,7 @@ sudoku_gadget<FieldT>::sudoku_gadget(protoboard<FieldT> &pb, unsigned int n,  bo
 
     assert(dimension < 256); // any more will overflow the 8 bit storage
 
-    const size_t input_size_in_bits = (2 * (dimension * dimension * 8)) + /* H(K) */ 256;
+    const size_t input_size_in_bits = (2 * (dimension * dimension * 8)) + /* H(K) */ (look_at_digest ? 256 : 0);
     {
         const size_t input_size_in_field_elements = div_ceil(input_size_in_bits, FieldT::capacity());
         input_as_field_elements.allocate(pb, input_size_in_field_elements, "input_as_field_elements");
@@ -275,8 +341,10 @@ sudoku_gadget<FieldT>::sudoku_gadget(protoboard<FieldT> &pb, unsigned int n,  bo
 
     seed_key.reset(new digest_variable<FieldT>(pb, 256, "seed_key"));
     h_seed_key.reset(new digest_variable<FieldT>(pb, 256, "seed_key"));
-    input_as_bits.insert(input_as_bits.end(), h_seed_key->bits.begin(), h_seed_key->bits.end());
-
+    if (look_at_digest) {
+			input_as_bits.insert(input_as_bits.end(), h_seed_key->bits.begin(), h_seed_key->bits.end());
+		}
+		
     pb_variable_array<FieldT> seed_key_cropped(seed_key->bits.begin(), seed_key->bits.begin() + (256 - 8));
     key.reset(new sudoku_encryption_key<FieldT>(pb, dimension, seed_key_cropped));
 
@@ -293,7 +361,7 @@ sudoku_gadget<FieldT>::sudoku_gadget(protoboard<FieldT> &pb, unsigned int n,  bo
 																														"H(K)"));
 		}
 
-    assert(input_as_bits.size() == input_size_in_bits);
+    //assert(input_as_bits.size() == input_size_in_bits);
     unpack_inputs.reset(new multipacking_gadget<FieldT>(this->pb, input_as_bits, input_as_field_elements, FieldT::capacity(), FMT("", " unpack_inputs")));
 }
 

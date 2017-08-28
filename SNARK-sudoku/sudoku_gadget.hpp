@@ -8,6 +8,28 @@ bool sha256_padding[256] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 
 
 template<typename FieldT>
+class mydisjunction_gadget : public gadget<FieldT> {
+private:
+    pb_variable<FieldT> inv;
+public:
+    const pb_variable_array<FieldT> inputs;
+    const pb_variable<FieldT> output;
+
+    mydisjunction_gadget(protoboard<FieldT>& pb,
+                       const pb_variable_array<FieldT> &inputs,
+                       const pb_variable<FieldT> &output,
+                       const std::string &annotation_prefix="") :
+        gadget<FieldT>(pb, annotation_prefix), inputs(inputs), output(output)
+    {
+        assert(inputs.size() >= 1);
+        inv.allocate(pb, FMT(this->annotation_prefix, " inv"));
+    }
+
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness();
+};
+
+template<typename FieldT>
 class constraint_vars_protoboard : public protoboard<FieldT> {
 	public:
 		r1cs_constraint_system<FieldT> orig_cs;
@@ -15,11 +37,13 @@ class constraint_vars_protoboard : public protoboard<FieldT> {
 		constraint_vars_protoboard() : protoboard<FieldT>() {}
     
     // vars should be unallocated
-    void mk_constraints_vars(pb_variable_array<FieldT> &vars) {
+    void mk_constraints_vars(pb_variable_array<FieldT> &vars_aux, pb_variable_array<FieldT> &vars) {
 			orig_cs = this->constraint_system;
+			//printf("CS # before: %d\n", orig_cs.num_constraints());
 			r1cs_constraint_system<FieldT> &cs = this->constraint_system;
 			
-			vars.allocate(*this, cs.num_constraints(), "");
+			vars_aux.allocate(*this, cs.num_constraints(), "cs_vars_aux");
+			vars.allocate(*this, cs.num_constraints(), "cs_vars");
 			
 			
 			 for (size_t i = 0; i < cs.num_constraints(); ++i) {
@@ -28,14 +52,21 @@ class constraint_vars_protoboard : public protoboard<FieldT> {
 				 // Add an additional variable to all constraints.
 				 // If the constraint is satisfied the variable should be zero
 				
-				 constr.c.add_term(vars[i], 1); 
+				 constr.c.add_term(vars_aux[i], 1); 
+			 }
+			 
+			 auto num_cs = cs.num_constraints();
+			 for (size_t i = 0; i < num_cs; ++i) {
+				 this->add_r1cs_constraint(r1cs_constraint<FieldT>(vars_aux[i], -vars_aux[i], -vars[i]), "vars_aux and vars");
 			 }
 			 
 		}
 		
-		void mk_witnesses(pb_variable_array<FieldT> &vars)
+		void mk_witnesses(pb_variable_array<FieldT> &vars_aux, pb_variable_array<FieldT> &vars)
 		{
 			auto full_variable_assignment = this->full_variable_assignment();
+			//printf("CS # after: %d\n", orig_cs.num_constraints());
+
 			
 			for (size_t c = 0; c < orig_cs.constraints.size(); ++c)
 			{
@@ -47,7 +78,11 @@ class constraint_vars_protoboard : public protoboard<FieldT> {
 				const FieldT res = ares*bres-cres;
 				
 				// var is 0 iff constraint is satisfied	
-				this->val(vars[c]) = (res == FieldT::zero()) ? FieldT::zero() : FieldT::one();
+				//this->val(vars[c]) = (res == FieldT::zero()) ? FieldT::zero() : FieldT::one();
+				this->val(vars_aux[c]) = res;
+				this->val(vars[c]) = (res  != FieldT::zero()) ? FieldT::one() :  FieldT::zero();
+				//if (res != FieldT::zero())
+				//	printf("---------- Found sudoku constraint unsatisfied! --------\n");
 				
 			}	
 
@@ -67,9 +102,9 @@ class test_Maxwell : public gadget<FieldT> {
 	public:
 		const pb_variable<FieldT> &output;
 		
-		pb_variable_array<FieldT> cs_vars;
+		pb_variable_array<FieldT> cs_vars_aux, cs_vars;
 		std::shared_ptr<sudoku_gadget<FieldT> > sudoku;
-		std::shared_ptr<disjunction_gadget<FieldT> > disjunction;
+		std::shared_ptr<mydisjunction_gadget<FieldT> > disjunction;
 		
 		
 		constraint_vars_protoboard<FieldT> &c_pb;

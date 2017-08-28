@@ -1,14 +1,14 @@
 #include <common/profiling.hpp>
 #include <common/utils.hpp>
 
-static const char * annotation_prefix = "";
+//static const char * annotation_prefix = "";
 
 template<typename FieldT>
 fair_exchange_gadget<FieldT>::fair_exchange_gadget(constraint_vars_protoboard<FieldT> &pb, int n) :
-        gadget<FieldT>(pb)
+        gadget<FieldT>(pb, "fair_exchange")
 { 
 
-	is_good_witness.allocate(pb, "");
+	is_good_witness.allocate(pb, "is_good_witness");
 	maxwell_test.reset(new test_Maxwell<FieldT>(pb, n, is_good_witness));	
 	
 	selector.reset(new output_selector_gadget<FieldT>(pb, is_good_witness, maxwell_test->seed_key().bits));
@@ -25,18 +25,18 @@ void fair_exchange_gadget<FieldT>::generate_r1cs_constraints()
 	// XXX: These two tests may be removed later
 	
 	for (auto b : alleged_digest.bits) {
-		generate_boolean_r1cs_constraint<FieldT>(this->pb, b, "enforcement bitness alleged_digest ");
+		//generate_boolean_r1cs_constraint<FieldT>(this->pb, b, "enforcement bitness alleged_digest ");
 	}
 	
 	for (auto r_i : maxwell_test->seed_key().bits) { 
-		generate_boolean_r1cs_constraint<FieldT>(this->pb, r_i, "enforcement bitness r");
+		//generate_boolean_r1cs_constraint<FieldT>(this->pb, r_i, "enforcement bitness r");
 	}
 	
 	maxwell_test->generate_r1cs_constraints();
-	selector->generate_r1cs_constraints(); 
+	selector->generate_r1cs_constraints();
 	
 	// check that alleged digest and the selector's output are the same
-	for (auto i = 0; i < digest_size; i++) { 
+	for (auto i = 0; i < digest_size; i++) {  
 		this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(alleged_digest.bits[i], 1, selector->selected_digest[i]), "alleged_digest == selected_digest");
 	}
 	
@@ -62,11 +62,11 @@ template<typename FieldT>
 output_selector_gadget<FieldT>::output_selector_gadget(protoboard<FieldT> &pb,
 																										const pb_variable<FieldT> &_t,
 																										const pb_variable_array<FieldT> &_r) :
-																										gadget<FieldT>(pb),
+																										gadget<FieldT>(pb, "output_selector"),
 																										t(_t),
 																										r(_r)
 {
-	xor_r.allocate(pb, digest_size, "");
+	xor_r.allocate(pb, digest_size, "xor_r");
 	
 	sha_r.reset(new digest_variable<FieldT>(pb, digest_size, "sha_r"));
 	
@@ -84,10 +84,10 @@ output_selector_gadget<FieldT>::output_selector_gadget(protoboard<FieldT> &pb,
 			SHA256_default_IV<FieldT>(pb),
 			block->bits,
 			*sha_r,
-			""));
+			"compression_function_sha"));
 		
 	
-	selected_digest.allocate(pb, digest_size, "");
+	selected_digest.allocate(pb, digest_size, "selected_digest");
 
 }
 
@@ -143,14 +143,22 @@ void output_selector_gadget<FieldT>::generate_r1cs_witness()
 	compute_sha_r->generate_r1cs_witness();
 	//sha_r->generate_r1cs_witness(); // we shouldn't need this
 	
+	//printf("XORED value\n");
 	for (auto i = 0; i < digest_size; i++) {
 		this->pb.val(xor_r[i]) = this->pb.val(r[i]) + this->pb.val(sha_r->bits[i]) - FieldT(2) * this->pb.val(r[i])* this->pb.val(sha_r->bits[i]);
+		//printf("%d", this->pb.val(xor_r[i]) == FieldT::one());
 	}
+	//printf("\n");
 	
+	//printf("SELECTED value\n");
+
 	for (auto i = 0; i < digest_size; i++) {
 		this->pb.val(selected_digest[i]) = this->pb.val(t)*this->pb.val(sha_r->bits[i]) + 
 																						(FieldT::one()-this->pb.val(t))*this->pb.val(xor_r[i]);
+		//printf("%d", this->pb.val(selected_digest[i]) == FieldT::one());
 	}
+	//printf("\n");
+
 }
 
 
