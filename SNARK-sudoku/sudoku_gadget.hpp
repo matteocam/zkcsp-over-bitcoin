@@ -1,9 +1,82 @@
-#include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp"
-#include "algebra/fields/field_utils.hpp"
+#include <libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp>
+#include <algebra/fields/field_utils.hpp>
+#include <libsnark/gadgetlib1/protoboard.hpp>
 
 using namespace libsnark;
 
 bool sha256_padding[256] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0};
+
+
+template<typename FieldT>
+class constraint_vars_protoboard : public protoboard<FieldT> {
+	public:
+		r1cs_constraint_system<FieldT> orig_cs;
+	
+		constraint_vars_protoboard() : protoboard<FieldT>() {}
+    
+    // vars should be unallocated
+    void mk_constraints_vars(pb_variable_array<FieldT> &vars) {
+			orig_cs = this->constraint_system;
+			r1cs_constraint_system<FieldT> &cs = this->constraint_system;
+			
+			vars.allocate(*this, cs.num_constraints(), "");
+			
+			
+			 for (size_t i = 0; i < cs.num_constraints(); ++i) {
+				 r1cs_constraint<FieldT> &constr = cs.constraints[i];
+				 
+				 // Add an additional variable to all constraints.
+				 // If the constraint is satisfied the variable should be zero
+				
+				 constr.c.add_term(vars[i], 1); 
+			 }
+			 
+		}
+		
+		void mk_witnesses(pb_variable_array<FieldT> &vars)
+		{
+			auto full_variable_assignment = this->full_variable_assignment();
+			
+			for (size_t c = 0; c < orig_cs.constraints.size(); ++c)
+			{
+				const FieldT ares = orig_cs.constraints[c].a.evaluate(full_variable_assignment);
+				const FieldT bres = orig_cs.constraints[c].b.evaluate(full_variable_assignment);
+				const FieldT cres = orig_cs.constraints[c].c.evaluate(full_variable_assignment);
+				
+				// res is zero iff constraint is satisfied
+				const FieldT res = ares*bres-cres;
+				
+				// var is 0 iff constraint is satisfied	
+				this->val(vars[c]) = (res != FieldT::zero()) ? FieldT::zero() : FieldT::one();
+				
+			}	
+
+		}
+    
+};
+
+template<typename FieldT>
+class sudoku_gadget; 
+
+
+template<typename FieldT>
+class test_Maxwell : public gadget<FieldT> {
+	public:
+		const pb_variable<FieldT> &output;
+		pb_variable_array<FieldT> cs_vars;
+		std::shared_ptr<sudoku_gadget<FieldT> > sudoku;
+		
+		constraint_vars_protoboard<FieldT> &c_pb;
+	
+		test_Maxwell(constraint_vars_protoboard<FieldT> &pb, unsigned int n, const pb_variable<FieldT> &output);
+		
+    void generate_r1cs_constraints();
+    void generate_r1cs_witness(std::vector<bit_vector> &puzzle_values,
+                               std::vector<bit_vector> &input_solution_values,
+                               bit_vector &input_seed_key,
+                               bit_vector &hash_of_input_seed_key,
+                               std::vector<bit_vector> &input_encrypted_solution);
+};
 
 template<typename FieldT>
 class sudoku_encryption_key : public gadget<FieldT> {
@@ -118,4 +191,4 @@ r1cs_primary_input<FieldT> sudoku_input_map(unsigned int n,
                                             std::vector<bit_vector> &input_encrypted_solution
                                             );
 
-#include "gadget.tcc"
+#include "sudoku_gadget.tcc"

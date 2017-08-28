@@ -1,4 +1,30 @@
 template<typename FieldT>
+test_Maxwell<FieldT>::test_Maxwell(constraint_vars_protoboard<FieldT> &pb, unsigned int n, const pb_variable<FieldT> &output) :
+	gadget<FieldT>(pb, ""), output(output), c_pb(pb)
+{
+		sudoku.reset(new sudoku_gadget<FieldT>(pb, n));
+}
+		
+template<typename FieldT>
+void test_Maxwell<FieldT>::generate_r1cs_constraints()
+{
+	sudoku->generate_r1cs_constraints();
+	c_pb.mk_constraints_vars(cs_vars);
+}
+
+template<typename FieldT>
+void test_Maxwell<FieldT>::generate_r1cs_witness(std::vector<bit_vector> &puzzle_values,
+																		std::vector<bit_vector> &input_solution_values,
+																		bit_vector &input_seed_key,
+																		bit_vector &hash_of_input_seed_key,
+																		std::vector<bit_vector> &input_encrypted_solution)
+{
+	sudoku->generate_r1cs_witness(puzzle_values, input_solution_values, input_seed_key, 
+																hash_of_input_seed_key, input_encrypted_solution);
+	c_pb.mk_witnesses(cs_vars);
+}
+
+template<typename FieldT>
 sudoku_encryption_key<FieldT>::sudoku_encryption_key(protoboard<FieldT> &pb,
                                                unsigned int dimension,
                                                pb_variable_array<FieldT> &seed_key
