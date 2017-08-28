@@ -47,7 +47,7 @@ class constraint_vars_protoboard : public protoboard<FieldT> {
 				const FieldT res = ares*bres-cres;
 				
 				// var is 0 iff constraint is satisfied	
-				this->val(vars[c]) = (res != FieldT::zero()) ? FieldT::zero() : FieldT::one();
+				this->val(vars[c]) = (res == FieldT::zero()) ? FieldT::zero() : FieldT::one();
 				
 			}	
 
