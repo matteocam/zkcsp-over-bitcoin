@@ -61,10 +61,16 @@ class sudoku_gadget;
 
 template<typename FieldT>
 class test_Maxwell : public gadget<FieldT> {
+	private:
+	pb_variable<FieldT> disjunction_out;
+	
 	public:
 		const pb_variable<FieldT> &output;
+		
 		pb_variable_array<FieldT> cs_vars;
 		std::shared_ptr<sudoku_gadget<FieldT> > sudoku;
+		std::shared_ptr<disjunction_gadget<FieldT> > disjunction;
+		
 		
 		constraint_vars_protoboard<FieldT> &c_pb;
 	
@@ -76,6 +82,10 @@ class test_Maxwell : public gadget<FieldT> {
                                bit_vector &input_seed_key,
                                bit_vector &hash_of_input_seed_key,
                                std::vector<bit_vector> &input_encrypted_solution);
+                               
+    const digest_variable<FieldT> &seed_key() { return *sudoku->seed_key; }
+    const digest_variable<FieldT> &alleged_digest() { return *sudoku->h_seed_key; }
+
 };
 
 template<typename FieldT>
@@ -173,9 +183,11 @@ public:
     std::shared_ptr<sudoku_encryption_key<FieldT>> key;
 
     pb_variable_array<FieldT> puzzle_enforce;
+    
+    bool look_at_digest;
 
 
-    sudoku_gadget(protoboard<FieldT> &pb, unsigned int n);
+    sudoku_gadget(protoboard<FieldT> &pb, unsigned int n, bool look_at_digest);
     void generate_r1cs_constraints();
     void generate_r1cs_witness(std::vector<bit_vector> &puzzle_values,
                                std::vector<bit_vector> &input_solution_values,

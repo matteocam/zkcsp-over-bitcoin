@@ -12,60 +12,42 @@
 const int digest_size = 256;
 //bool sha256_padding[256] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0};
 
-template<typename ppT>
+template<typename FieldT>
 class output_selector_gadget;
 
-template<typename ppT>
-class check_pairing_eq_gadget;
+template<typename FieldT>
+class constraint_vars_protoboard; 
 
-template<typename ppT>
-class fair_auditing_gadget : public gadget<Fr<ppT>> {
+
+template<typename FieldT>
+class fair_exchange_gadget : public gadget<FieldT> {
 	
 public:
-	typedef Fr<ppT> FieldT;
-	
-	
-	// Primary input
-	std::shared_ptr<G1_variable<ppT> > M;
-	std::shared_ptr<G2_variable<ppT> > y;
-	std::shared_ptr<G2_variable<ppT> > g; // TODO: embed this and y in circuit
-	pb_variable_array<FieldT> alleged_digest;
-	
-	// Witness
-	std::shared_ptr<G1_variable<ppT> > sigma;
-	pb_variable_array<FieldT> r;
-	
+	pb_variable<FieldT> is_good_witness;
+
 	// Gadgets
-	std::shared_ptr<G1_checker_gadget<ppT> > check_M;
-	std::shared_ptr<G2_checker_gadget<ppT> > check_y;
-	std::shared_ptr<G2_checker_gadget<ppT> > check_g;
-	std::shared_ptr<G1_checker_gadget<ppT> > check_sigma;
+	std::shared_ptr<test_Maxwell<FieldT> > maxwell_test;
+	std::shared_ptr<output_selector_gadget<FieldT> > selector;
 	
 	
-	std::shared_ptr<check_pairing_eq_gadget<ppT> > pairing_check;
-	std::shared_ptr<output_selector_gadget<ppT> > selector;
-	
-	
-	fair_auditing_gadget(protoboard<FieldT> &pb);
+	fair_exchange_gadget(constraint_vars_protoboard<FieldT> &pb, int n);
 	void generate_r1cs_constraints();
-	void generate_r1cs_witness(const G1<other_curve<ppT> > &M_val,
-														 const G2<other_curve<ppT> > &y_val,
-														 const G2<other_curve<ppT> > &g_val,
-														 const bit_vector &alleged_digest_val,
-														 const G1<other_curve<ppT> > &sigma_val,
-														 const bit_vector &r_val);
+	void generate_r1cs_witness(std::vector<bit_vector> &puzzle_values,
+                               std::vector<bit_vector> &input_solution_values,
+                               bit_vector &input_seed_key,
+                               bit_vector &hash_of_input_seed_key,
+                               std::vector<bit_vector> &input_encrypted_solution);
 	
-	unsigned num_input_variables() const {
-		return M->num_variables() + y->num_variables() + g->num_variables() + digest_size /* alleged_digest */ ;
-	}
+	/* unsigned num_input_variables() const {
+		return M->num_variables() + y->num_variables() + g->num_variables() + digest_size;
+	} */
                                
 };
 
 
-template<typename ppT>
-class output_selector_gadget : public gadget<Fr<ppT>> {
+template<typename FieldT>
+class output_selector_gadget : public gadget<FieldT> {
 public:
-	typedef Fr<ppT> FieldT;
 
 	std::shared_ptr<sha256_compression_function_gadget<FieldT>> compute_sha_r;
 	std::shared_ptr<digest_variable<FieldT>> sha_r, padding_var;
@@ -96,49 +78,6 @@ public:
                                
 };
 
-template<typename ppT>
-class check_pairing_eq_gadget : public gadget<Fr<ppT>> {
-public:
-	typedef Fr<ppT> FieldT;
-	check_pairing_eq_gadget(protoboard<Fr<ppT>> &pb,
-													std::shared_ptr<G1_variable<ppT> > _a,
-													std::shared_ptr<G2_variable<ppT> > _b,
-													std::shared_ptr<G1_variable<ppT> > _c,
-													std::shared_ptr<G2_variable<ppT> > _d);
-	void generate_r1cs_constraints();
-    
-	//void generate_r1cs_witness(G1<other_curve<ppT> > _a, G2<other_curve<ppT> > _b, G1<other_curve<ppT> > _c, G2<other_curve<ppT> > _d);
-	void generate_r1cs_witness();
-	
-	unsigned num_input_variables()
-	{
-		return a->num_variables() + b->num_variables() + c->num_variables() + d->num_variables();
-	}
 
-	// variables
-	std::shared_ptr<G1_variable<ppT> > a;
-	std::shared_ptr<G2_variable<ppT> > b;
-	std::shared_ptr<G1_variable<ppT> > c;
-	std::shared_ptr<G2_variable<ppT> > d;
-	
-	pb_variable<FieldT> is_valid;
-    
-	
-	// values
-	std::shared_ptr<G1_precomputation<ppT> > a_precomp;
-	std::shared_ptr<G2_precomputation<ppT> > b_precomp;
-	std::shared_ptr<G1_precomputation<ppT> > c_precomp;
-	std::shared_ptr<G2_precomputation<ppT> > d_precomp;
-	
-	
-	// gadgets
-	std::shared_ptr<precompute_G1_gadget<ppT> > compute_a_precomp;
-	std::shared_ptr<precompute_G2_gadget<ppT> > compute_b_precomp;
-	std::shared_ptr<precompute_G1_gadget<ppT> > compute_c_precomp;
-	std::shared_ptr<precompute_G2_gadget<ppT> > compute_d_precomp;
-	
-	std::shared_ptr<check_e_equals_e_gadget<ppT> > check_valid;
-
-};
 
 #include "gadget.tcc"

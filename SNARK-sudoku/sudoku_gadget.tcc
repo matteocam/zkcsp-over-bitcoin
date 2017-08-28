@@ -2,14 +2,24 @@ template<typename FieldT>
 test_Maxwell<FieldT>::test_Maxwell(constraint_vars_protoboard<FieldT> &pb, unsigned int n, const pb_variable<FieldT> &output) :
 	gadget<FieldT>(pb, ""), output(output), c_pb(pb)
 {
-		sudoku.reset(new sudoku_gadget<FieldT>(pb, n));
+		sudoku.reset(new sudoku_gadget<FieldT>(pb, n, true)); // Should be false
+		
+		disjunction_out.allocate(pb, "");
 }
+
 		
 template<typename FieldT>
 void test_Maxwell<FieldT>::generate_r1cs_constraints()
 {
 	sudoku->generate_r1cs_constraints();
 	c_pb.mk_constraints_vars(cs_vars);
+	
+	// must be created here because cs_vars are allocated only after mk_constraints_vars
+	disjunction.reset(new disjunction_gadget<FieldT>(c_pb, cs_vars, disjunction_out, ""));
+	
+	disjunction->generate_r1cs_constraints();
+	// output is 1-disjunction_out
+	c_pb.add_r1cs_constraint(r1cs_constraint<FieldT>(1, 1-disjunction_out, output), "");
 }
 
 template<typename FieldT>
@@ -22,6 +32,13 @@ void test_Maxwell<FieldT>::generate_r1cs_witness(std::vector<bit_vector> &puzzle
 	sudoku->generate_r1cs_witness(puzzle_values, input_solution_values, input_seed_key, 
 																hash_of_input_seed_key, input_encrypted_solution);
 	c_pb.mk_witnesses(cs_vars);
+	disjunction->generate_r1cs_witness();
+	
+	if (c_pb.val(disjunction_out) == FieldT::zero()) {
+		c_pb.val(output) = FieldT::one();
+	} else {
+		c_pb.val(output) = FieldT::zero();
+	}
 }
 
 template<typename FieldT>
@@ -185,8 +202,8 @@ void sudoku_cell_gadget<FieldT>::generate_r1cs_witness()
 }
 
 template<typename FieldT>
-sudoku_gadget<FieldT>::sudoku_gadget(protoboard<FieldT> &pb, unsigned int n) :
-        gadget<FieldT>(pb, FMT("", " l_gadget"))
+sudoku_gadget<FieldT>::sudoku_gadget(protoboard<FieldT> &pb, unsigned int n,  bool look_at_digest) :
+        gadget<FieldT>(pb, FMT("", " l_gadget")), look_at_digest(look_at_digest)
 {
     dimension = n * n;
 
@@ -268,11 +285,13 @@ sudoku_gadget<FieldT>::sudoku_gadget(protoboard<FieldT> &pb, unsigned int n) :
         key->padding_var->bits
     }, "key_blocks[i]"));
 
-    h_k_sha.reset(new sha256_compression_function_gadget<FieldT>(pb,
-                                                          key->IV,
-                                                          h_k_block->bits,
-                                                          *h_seed_key,
-                                                          "H(K)"));
+		if (look_at_digest) {
+			h_k_sha.reset(new sha256_compression_function_gadget<FieldT>(pb,
+																														key->IV,
+																														h_k_block->bits,
+																														*h_seed_key,
+																														"H(K)"));
+		}
 
     assert(input_as_bits.size() == input_size_in_bits);
     unpack_inputs.reset(new multipacking_gadget<FieldT>(this->pb, input_as_bits, input_as_field_elements, FieldT::capacity(), FMT("", " unpack_inputs")));
@@ -314,7 +333,9 @@ void sudoku_gadget<FieldT>::generate_r1cs_constraints()
 
     unpack_inputs->generate_r1cs_constraints(true);
 
-    h_k_sha->generate_r1cs_constraints();
+		if (look_at_digest) {
+			h_k_sha->generate_r1cs_constraints();
+		}
 
     // encrypted solution check
     unsigned int sha_i = 0;
@@ -377,11 +398,14 @@ void sudoku_gadget<FieldT>::generate_r1cs_witness(std::vector<bit_vector> &input
 
     key->generate_r1cs_witness();
 
-    h_k_sha->generate_r1cs_witness();
+		if (look_at_digest) {
+			h_k_sha->generate_r1cs_witness();
+		}
 
     unpack_inputs->generate_r1cs_witness_from_bits();
-
+ 
     h_seed_key->bits.fill_with_bits(this->pb, hash_of_input_seed_key);
+    
 }
 
 template<typename FieldT>

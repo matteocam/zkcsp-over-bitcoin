@@ -3,99 +3,66 @@
 
 static const char * annotation_prefix = "";
 
-template<typename ppT>
-fair_auditing_gadget<ppT>::fair_auditing_gadget(protoboard<Fr<ppT>> &pb) :
-        gadget<Fr<ppT>>(pb)
+template<typename FieldT>
+fair_exchange_gadget<FieldT>::fair_exchange_gadget(constraint_vars_protoboard<FieldT> &pb, int n) :
+        gadget<FieldT>(pb)
 { 
-	// Allocate variables
-	M.reset(new G1_variable<ppT>(pb, ""));
-	y.reset(new G2_variable<ppT>(pb, ""));
-	g.reset(new G2_variable<ppT>(pb, ""));
-	alleged_digest.allocate(pb, digest_size, "");
+
+	is_good_witness.allocate(pb, "");
+	maxwell_test.reset(new test_Maxwell<FieldT>(pb, n, is_good_witness));	
 	
-	sigma.reset(new G1_variable<ppT>(pb, ""));
-	r.allocate(pb, digest_size, "");
+	selector.reset(new output_selector_gadget<FieldT>(pb, is_good_witness, maxwell_test->seed_key().bits));
 	
-	
-	check_M.reset(new G1_checker_gadget<ppT>(pb, *M, ""));
-	check_y.reset(new G2_checker_gadget<ppT>(pb, *y, ""));
-	check_g.reset(new G2_checker_gadget<ppT>(pb, *g, ""));
-	check_sigma.reset(new G1_checker_gadget<ppT>(pb, *sigma, ""));
-	
-	pairing_check.reset(new check_pairing_eq_gadget<ppT>(pb, sigma, g, M, y));
-	selector.reset(new output_selector_gadget<ppT>(pb, pairing_check->is_valid, r));
-	
-	this->pb.set_input_sizes(num_input_variables());
+	// XXX: Do I need this??
+	//this->pb.set_input_sizes(num_input_variables());
 	
 }
 
-template<typename ppT>
-void fair_auditing_gadget<ppT>::generate_r1cs_constraints()
+template<typename FieldT>
+void fair_exchange_gadget<FieldT>::generate_r1cs_constraints()
 {
+	const digest_variable<FieldT> &alleged_digest = maxwell_test->alleged_digest();
+	// XXX: These two tests may be removed later
 	
-
-	check_M->generate_r1cs_constraints();
-	check_y->generate_r1cs_constraints();	
-	check_g->generate_r1cs_constraints();
-	
-	for (auto b : alleged_digest) {
+	for (auto b : alleged_digest.bits) {
 		generate_boolean_r1cs_constraint<FieldT>(this->pb, b, "enforcement bitness alleged_digest ");
 	}
 	
-	
-	check_sigma->generate_r1cs_constraints();
-	
-	for (auto r_i : r) { 
+	for (auto r_i : maxwell_test->seed_key().bits) { 
 		generate_boolean_r1cs_constraint<FieldT>(this->pb, r_i, "enforcement bitness r");
 	}
 	
-	
-	pairing_check->generate_r1cs_constraints(); 
+	maxwell_test->generate_r1cs_constraints();
 	selector->generate_r1cs_constraints(); 
 	
 	// check that alleged digest and the selector's output are the same
 	for (auto i = 0; i < digest_size; i++) { 
-		this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(alleged_digest[i], 1, selector->selected_digest[i]), "alleged_diges == selected_digest");
-		//this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(alleged_digest[i], 1, selector->sha_r->bits[i]), "alleged_diges == selected_digest");
-		// XXX: should be the upper line
+		this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(alleged_digest.bits[i], 1, selector->selected_digest[i]), "alleged_digest == selected_digest");
 	}
 	
 }
 
-template<typename ppT>
-void fair_auditing_gadget<ppT>::generate_r1cs_witness(
-														 const G1<other_curve<ppT> > &M_val,
-														 const G2<other_curve<ppT> > &y_val,
-														 const G2<other_curve<ppT> > &g_val,
-														 const bit_vector &alleged_digest_val,
-														 const G1<other_curve<ppT> > &sigma_val,
-														 const bit_vector &r_val)
+template<typename FieldT>
+void fair_exchange_gadget<FieldT>::generate_r1cs_witness(
+															 std::vector<bit_vector> &puzzle_values,
+                               std::vector<bit_vector> &input_solution_values,
+                               bit_vector &input_seed_key,
+                               bit_vector &hash_of_input_seed_key,
+                               std::vector<bit_vector> &input_encrypted_solution)
 {
-	M->generate_r1cs_witness(M_val);
-	y->generate_r1cs_witness(y_val);
-	g->generate_r1cs_witness(g_val);
-	alleged_digest.fill_with_bits(this->pb, alleged_digest_val);
-	
-	sigma->generate_r1cs_witness(sigma_val);
-	
-	check_M->generate_r1cs_witness();
-	check_y->generate_r1cs_witness();
-	check_g->generate_r1cs_witness();
-	check_sigma->generate_r1cs_witness();
-	
-	
-	r.fill_with_bits(this->pb, r_val);
-	
-	pairing_check->generate_r1cs_witness();
+	maxwell_test->generate_r1cs_witness(puzzle_values, input_solution_values, input_seed_key, 
+																hash_of_input_seed_key, input_encrypted_solution);
+	//alleged_digest.fill_with_bits(this->pb, alleged_digest_val);
+			
 	selector->generate_r1cs_witness();
 }
 
 
-template<typename ppT>
-output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb,
-																										const pb_variable<Fr<ppT>> &_t,
-																										const pb_variable_array<Fr<ppT>> &_r) :
-																										gadget<Fr<ppT>>(pb),
+template<typename FieldT>
+output_selector_gadget<FieldT>::output_selector_gadget(protoboard<FieldT> &pb,
+																										const pb_variable<FieldT> &_t,
+																										const pb_variable_array<FieldT> &_r) :
+																										gadget<FieldT>(pb),
 																										t(_t),
 																										r(_r)
 {
@@ -124,8 +91,8 @@ output_selector_gadget<ppT>::output_selector_gadget(protoboard<Fr<ppT>> &pb,
 
 }
 
-template<typename ppT>
-void output_selector_gadget<ppT>::generate_r1cs_constraints()
+template<typename FieldT>
+void output_selector_gadget<FieldT>::generate_r1cs_constraints()
 {
 	//bit_vector sha256_padding(sha_padding());
 	for (unsigned int i = 0; i < digest_size; i++) {
@@ -164,8 +131,8 @@ void output_selector_gadget<ppT>::generate_r1cs_constraints()
 	
 }
 
-template<typename ppT>
-void output_selector_gadget<ppT>::generate_r1cs_witness()
+template<typename FieldT>
+void output_selector_gadget<FieldT>::generate_r1cs_witness()
 {
 	//bit_vector sha256_padding(sha_padding());
 	
@@ -187,96 +154,3 @@ void output_selector_gadget<ppT>::generate_r1cs_witness()
 }
 
 
-
-template<typename ppT>
-check_pairing_eq_gadget<ppT>::check_pairing_eq_gadget(
-																protoboard<Fr<ppT>> &pb,
-																std::shared_ptr<G1_variable<ppT> > _a,
-																std::shared_ptr<G2_variable<ppT> > _b,
-																std::shared_ptr<G1_variable<ppT> > _c,
-																std::shared_ptr<G2_variable<ppT> > _d) :
-																gadget<Fr<ppT>>(pb)
-{
-	
-	// variables
-	a = _a;
-	b = _b;
-	c = _c;
-	d = _d;
-	
-	// Precomputations (values)
-	a_precomp.reset(new G1_precomputation<ppT>());
-	b_precomp.reset(new G2_precomputation<ppT>());
-	c_precomp.reset(new G1_precomputation<ppT>());
-	d_precomp.reset(new G2_precomputation<ppT>());
-	
-	
-	// Precomputations (gadgets)
-	compute_a_precomp.reset(
-		new precompute_G1_gadget<ppT>(
-			pb,
-			*(a),
-			*a_precomp,
-			FMT(annotation_prefix, " compute_a_precomp")));
-			
-	compute_b_precomp.reset(
-		new precompute_G2_gadget<ppT>(
-			pb,
-			*(b),
-			*b_precomp,
-			FMT(annotation_prefix, " compute_b_precomp")));
-	
-	compute_c_precomp.reset(
-		new precompute_G1_gadget<ppT>(
-			pb,
-			*(c),
-			*c_precomp,
-			FMT(annotation_prefix, " compute_c_precomp")));
-			
-	compute_d_precomp.reset(
-		new precompute_G2_gadget<ppT>(
-			pb,
-			*(d),
-			*d_precomp,
-			FMT(annotation_prefix, " compute_d_precomp")));
-	
-  is_valid.allocate(pb, FMT(annotation_prefix, " is_valid"));
-  check_valid.reset(
-			new check_e_equals_e_gadget<ppT>(
-				pb, 
-			 *a_precomp,
-			 *b_precomp,
-			 *c_precomp,
-			 *d_precomp,
-			 is_valid,
-			 FMT(annotation_prefix, " check_valid")));
-}
-
-template<typename ppT>
-void check_pairing_eq_gadget<ppT>::generate_r1cs_constraints()
-{
-
-		compute_a_precomp->generate_r1cs_constraints();
-		compute_b_precomp->generate_r1cs_constraints();
-		compute_c_precomp->generate_r1cs_constraints();
-		compute_d_precomp->generate_r1cs_constraints();
-
-		check_valid->generate_r1cs_constraints(); 
-		
-		// NOTE: I don't think we need this. It does not have to be 1 all the time. The SHA output will determine that.
-		//this->pb.add_r1cs_constraint(r1cs_constraint<FieldT>(is_valid, 1, 1), "is_valid should be 1");
-}
-
-template<typename ppT>
-void check_pairing_eq_gadget<ppT>::generate_r1cs_witness()
-{
-		
-
-		compute_a_precomp->generate_r1cs_witness();
-		compute_b_precomp->generate_r1cs_witness();
-		compute_c_precomp->generate_r1cs_witness();
-		compute_d_precomp->generate_r1cs_witness();
-
-		check_valid->generate_r1cs_witness(); 
-		//is_valid->generate_r1cs_witness();
-}

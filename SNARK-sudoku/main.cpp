@@ -68,147 +68,6 @@ template < typename ppT >
   return ans;
 }
 
-template < typename ppT > r1cs_example < Fr < ppT >> gen_BLS_example ()
-{
-  typedef
-    Fr <
-    ppT >
-    FieldT;
-
-  protoboard < FieldT > pb;
-
-  fair_auditing_gadget < ppT > g (pb);
-  //const int
-  //  num_inputs = g.num_input_variables ();
-  g.generate_r1cs_constraints ();
-  
-  auto
-    cs = pb.get_constraint_system ();
-
-  auto
-    sigma = FieldT::random_element () * G1 < other_curve < ppT >>::one ();
-  auto
-    gen = FieldT::random_element () * G2 < other_curve < ppT >>::one ();
-  auto
-    M = sigma;
-  auto
-    y = gen;
-
-  bit_vector
-    r;
-  bit_vector
-    ad;
-
-  const
-    vector <
-    uint8_t >
-  r8bit =
-    { 206, 64, 25, 10, 245, 205, 246, 107, 191, 157, 114, 181, 63, 40, 95,
-134, 6, 178, 210, 43, 243, 10, 217, 251, 246, 248, 0, 21, 86, 194, 100, 94 };
-  const
-    vector <
-    uint8_t >
-  ad8bit =
-    { 253, 199, 66, 55, 24, 155, 80, 121, 138, 60, 36, 201, 186, 221, 164,
-65, 194, 53, 192, 159, 252, 7, 194, 24, 200, 217, 57, 55, 45, 204, 71, 9 };
-
-  convertBytesVectorToVector (r8bit, r);
-  convertBytesVectorToVector (ad8bit, ad);
-
-  g.generate_r1cs_witness (M, y, gen, ad, sigma, r);
-
-  cout << "Num constraints " << cs.num_constraints () << endl;
-
-  return r1cs_example < FieldT > (std::move (cs),
-				  std::move (pb.primary_input ()),
-				  std::move (pb.auxiliary_input ()));
-}
-
-/*
-template < typename ppT > r1cs_example < Fr < ppT >> gen_BLS_example2 ()
-{
-  typedef
-    Fr <
-    ppT >
-    FieldT;
-
-  protoboard < FieldT > pb;
-
-  fair_auditing_gadget < ppT > g (pb);
-  //const int
-  //  num_inputs = g.num_input_variables ();
-  g.generate_r1cs_constraints ();
-  
-  auto
-    cs = pb.get_constraint_system ();
-
-  auto
-    sigma = FieldT::random_element () * G1 < other_curve < ppT >>::one ();
-  auto
-    gen = FieldT::random_element () * G2 < other_curve < ppT >>::one ();
-  auto
-    M = sigma;
-  auto
-    y = gen;
-
-  bit_vector
-    r;
-  bit_vector
-    ad;
-
-  const
-    vector <
-    uint8_t >
-  r8bit =
-    { 206, 64, 25, 10, 245, 205, 246, 107, 191, 157, 114, 181, 63, 40, 95,
-134, 6, 178, 210, 43, 243, 10, 217, 251, 246, 248, 0, 21, 86, 194, 100, 94 };
-  const
-    vector <
-    uint8_t >
-  ad8bit =
-    { 253, 199, 66, 55, 24, 155, 80, 121, 138, 60, 36, 201, 186, 221, 164,
-65, 194, 53, 192, 159, 252, 7, 194, 24, 200, 217, 57, 55, 45, 204, 71, 9 };
-
-  convertBytesVectorToVector (r8bit, r);
-  convertBytesVectorToVector (ad8bit, ad);
-
-  g.generate_r1cs_witness (M, y, gen, ad, sigma, r);
-
-  cout << "Num constraints " << cs.num_constraints () << endl;
-  
-	std::shared_ptr<gadget_from_r1cs<FieldT> > g2;
-
-  
-	pb_variable_array<FieldT> vars;
-	vars.allocate(pb, , "");
-
-  g2.reset(new gadget_from_r1cs<FieldT>(pb,
-						vars,
-						cs,
-						"cs_as_gadget"));
-
-
-  return r1cs_example < FieldT > (std::move (cs),
-				  std::move (pb.primary_input ()),
-				  std::move (pb.auxiliary_input ()));
-}
-*/
-void
-single_test ()
-{
-  init_mnt4_params ();
-  default_r1cs_ppzksnark_pp::init_public_params ();
-
-  r1cs_example < Fr < default_r1cs_ppzksnark_pp > >example =
-    gen_BLS_example < default_r1cs_ppzksnark_pp > ();
-
-
-  bool
-    it_works = run_r1cs_ppzksnark < default_r1cs_ppzksnark_pp > (example);
-  cout << endl;
-  cout << (it_works ? "It works!" : "It failed.") << endl;
-}
-
 
 template < typename ppT > r1cs_example < Fr < ppT >> gen_sudoku_example ()
 {
@@ -219,8 +78,13 @@ template < typename ppT > r1cs_example < Fr < ppT >> gen_sudoku_example ()
 
   constraint_vars_protoboard < FieldT > pb;
 
+	/*
 	pb_variable<FieldT> var;
+	var.allocate(pb, "");
   test_Maxwell < FieldT > g (pb, SUDOKU_SIZE, var);
+  */
+   
+  fair_exchange_gadget<FieldT> g(pb, SUDOKU_SIZE); 
   g.generate_r1cs_constraints ();
  
   
@@ -287,7 +151,7 @@ sudoku_test ()
   cout << (it_works ? "It works!" : "It failed.") << endl;
 }
 
-
+/*
 void
 benchmark (int numReps)
 {
@@ -334,7 +198,7 @@ benchmark (int numReps)
   cout << "Avg Proving Time: " << prov_t / numReps << " millis" << endl;
   cout << "Avg Verification Time: " << ver_t / numReps << " millis" << endl;
 }
-
+*/
 
 int
 main (int argc, char **argv)
