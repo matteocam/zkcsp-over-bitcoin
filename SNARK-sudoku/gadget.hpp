@@ -1,13 +1,13 @@
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
 #include <libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp>
 #include <libsnark/algebra/fields/field_utils.hpp>
-#include <algebra/curves/mnt/mnt4/mnt4_init.hpp>
-#include <algebra/curves/mnt/mnt6/mnt6_init.hpp>
-#include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g1_gadget.hpp>
-#include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g2_gadget.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/pairing_checks.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
+//#include <algebra/curves/mnt/mnt4/mnt4_init.hpp>
+//#include <algebra/curves/mnt/mnt6/mnt6_init.hpp>
+//#include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g1_gadget.hpp>
+//#include <libsnark/gadgetlib1/gadgets/curves/weierstrass_g2_gadget.hpp>
+//#include <libsnark/gadgetlib1/gadgets/pairing/pairing_checks.hpp>
+//#include <libsnark/gadgetlib1/gadgets/pairing/pairing_params.hpp>
+//#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
 
 const int digest_size = 256;
 //bool sha256_padding[256] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0};

@@ -14,15 +14,18 @@ using namespace std;
 #include <boost/optional.hpp>
 #include <libsnark/gadgetlib1/gadgets/gadget_from_r1cs.hpp>
 
-#include <libsnark/algebra/curves/mnt/mnt4/mnt4_init.hpp>
-#include <libsnark/algebra/curves/mnt/mnt6/mnt6_init.hpp>
-#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
+//#include <libsnark/algebra/curves/mnt/mnt4/mnt4_init.hpp>
+//#include <libsnark/algebra/curves/mnt/mnt6/mnt6_init.hpp>
+//#include <libsnark/gadgetlib1/gadgets/pairing/weierstrass_precomputation.hpp>
 using namespace libsnark;
 
-//#include "sudoku_gadget.hpp"
 #include "snark.hpp"
 
 #include "gadget.hpp"
+
+#include "pairing-checks.hpp"
+
+#include "../crs_checks_WI/crs_checks.hpp"
 
 const unsigned SUDOKU_SIZE = 3;
 
@@ -371,31 +374,50 @@ benchmark (int numReps, bool ourVersion)
       ver_t += my_timer_end ();
     }
 
-	cout << (ourVersion ? "-- Our version (Avg)-- " : "-- Maxwell (Avg)--") << "\n";
-  cout << "Avg Keygen Time: " << keygen_t / numReps << " millis" << endl;
-  cout << "Avg Proving Time: " << prov_t / numReps << " millis" << endl;
-  cout << "Avg Verification Time: " << ver_t / numReps << " millis" << endl;
+	cerr << (ourVersion ? "-- Our version (Avg)-- " : "-- Maxwell (Avg)--") << "\n";
+  cerr << "Avg Keygen Time: " << keygen_t / numReps << " millis" << endl;
+  cerr << "Avg Proving Time: " << prov_t / numReps << " millis" << endl;
+  cerr << "Avg Verification Time: " << ver_t / numReps << " millis" << endl;
+}
+
+void do_pairings(int n)
+{
+	typedef default_r1cs_ppzksnark_pp ppT;
+	
+	vector<G1<ppT>> v1;
+	vector<G2<ppT>> v2;
+	mk_rnd_group_elements<ppT>(n, v1, v2);
+	
+	my_timer_start ();
+	auto res = pairing_checks<ppT>(n, v1, v2);
+	int t = my_timer_end();
+	
+	cout << res << endl;
+	cerr << "Pairing time: " << t << endl;
 }
 
 
 int
 main (int argc, char **argv)
 {
+	default_r1cs_ppzksnark_pp::init_public_params ();
+	do_pairings(10000);
+
   //single_test();
 
 	//sudoku_test();
 
-	//benchmark (50, true);
-  //benchmark (50, false);
-    default_r1cs_ppzksnark_pp::init_public_params ();
+	//benchmark (1, true);
+  //benchmark (1, false);
 
+/*
    r1cs_example < Fr < default_r1cs_ppzksnark_pp > > a =
     gen_sudoku_example_our_version < default_r1cs_ppzksnark_pp > ();
 
 r1cs_example < Fr < default_r1cs_ppzksnark_pp > > b =
     gen_sudoku_example_maxwell < default_r1cs_ppzksnark_pp > ();
 
-
+*/
   return 0;
 
 }
